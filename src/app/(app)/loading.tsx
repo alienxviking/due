@@ -1,14 +1,15 @@
-import { PostRowSkeleton } from "@/components/post-row";
+import { DeadlineCardSkeleton } from "@/components/deadline-card";
 
 // Shown instantly on tab switches while the server fetches.
 export default function Loading() {
   return (
-    <div aria-busy className="pt-[calc(44px+env(safe-area-inset-top))]">
-      <div className="mx-4 mt-1 mb-4 h-9 w-40 animate-pulse rounded-lg bg-fill" />
-      <div className="ios-group mx-4 overflow-hidden rounded-[10px] bg-cell">
-        <PostRowSkeleton />
-        <PostRowSkeleton />
-        <PostRowSkeleton />
+    <div aria-busy className="pt-[max(28px,calc(env(safe-area-inset-top)+16px))] md:pt-14">
+      <div className="mb-3 h-3 w-24 animate-pulse rounded bg-white/10" />
+      <div className="mb-8 h-11 w-56 animate-pulse rounded-lg bg-white/10" />
+      <div className="grid gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-3">
+        <DeadlineCardSkeleton />
+        <DeadlineCardSkeleton />
+        <DeadlineCardSkeleton />
       </div>
     </div>
   );

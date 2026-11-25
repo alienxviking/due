@@ -28,7 +28,7 @@ export default async function EditPost({
 
   return (
     <PostForm
-      heading="Edit"
+      heading="Edit deadline"
       minDate="2000-01-01" // editing may keep an earlier date
       submitLabel="Save"
       back={safeBack}

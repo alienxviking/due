@@ -27,7 +27,7 @@ function Switch({
     <SwitchPrimitive
       className={cn(
         'relative peer flex h-[31px] w-[51px] px-0.5 shrink-0 cursor-pointer items-center justify-start rounded-full outline-none transition-colors duration-200 focus-visible:ring-4 focus-visible:ring-tint/30 disabled:cursor-not-allowed disabled:opacity-50',
-        'data-[state=checked]:bg-green data-[state=unchecked]:bg-[#e9e9ea] dark:data-[state=unchecked]:bg-[#39393d] data-[state=checked]:justify-end',
+        'data-[state=checked]:bg-tint data-[state=checked]:shadow-[0_0_16px_-2px_var(--tint)] data-[state=unchecked]:bg-white/10 data-[state=checked]:justify-end',
         className,
       )}
       {...props}

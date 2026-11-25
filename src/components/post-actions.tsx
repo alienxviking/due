@@ -1,16 +1,17 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
 import { approvePost, deletePost, rejectPost } from "@/app/(app)/actions";
+import { DeadlineCard } from "@/components/deadline-card";
+import { GhostButton, GlowButton } from "@/components/glass/buttons";
 import { PromptAlert } from "@/components/ios/alert";
-import { SwipeRow } from "@/components/ios/swipe-row";
-import { PostRow } from "@/components/post-row";
 import { success } from "@/lib/haptics";
 import type { Post } from "@/lib/types";
 
-/** Removes a row the moment an action starts (optimistic); brings it back if the server says no. */
+/** Removes a card the moment an action starts (optimistic); brings it back if the server says no. */
 function useRemovable() {
   const [gone, setGone] = useState(false);
   const [, start] = useTransition();
@@ -30,11 +31,11 @@ function useRemovable() {
   return { gone, run };
 }
 
-function Collapse({ gone, children }: { gone: boolean; children: React.ReactNode }) {
+function Exit({ gone, children }: { gone: boolean; children: React.ReactNode }) {
   return (
     <AnimatePresence initial={false}>
       {!gone && (
-        <motion.div exit={{ height: 0, opacity: 0, transition: { duration: 0.25, ease: [0.4, 0, 0.2, 1] } }} className="overflow-hidden">
+        <motion.div layout exit={{ opacity: 0, scale: 0.94, filter: "blur(6px)", transition: { duration: 0.25 } }}>
           {children}
         </motion.div>
       )}
@@ -42,53 +43,35 @@ function Collapse({ gone, children }: { gone: boolean; children: React.ReactNode
   );
 }
 
-/** Feed row. Admins can swipe left to edit. */
-export function FeedRow({ post, isAdmin, muted }: { post: Post; isAdmin: boolean; muted?: boolean }) {
-  const row = <PostRow post={post} muted={muted} />;
-  if (!isAdmin) return row;
-  return <SwipeRow trailing={[{ label: "Edit", color: "var(--gray)", href: `/posts/${post.id}/edit` }]}>{row}</SwipeRow>;
-}
-
-/** Approval queue row: swipe right to approve, left to reject, or use the buttons. */
-export function QueueRow({ post }: { post: Post }) {
+/** Approval queue card with Approve / Edit / Reject. */
+export function QueueCard({ post }: { post: Post }) {
   const { gone, run } = useRemovable();
   const [rejecting, setRejecting] = useState(false);
-  const approve = () => run(() => approvePost(post.id), "Approved. Everyone's being notified.");
 
   return (
-    <Collapse gone={gone}>
-      <SwipeRow
-        leading={{ label: "Approve", color: "var(--green)", onAction: approve, full: true }}
-        trailing={[
-          { label: "Edit", color: "var(--gray)", href: `/posts/${post.id}/edit?back=/admin` },
-          { label: "Reject", color: "var(--red)", onAction: () => setRejecting(true) },
-        ]}
-      >
-        <PostRow
-          post={post}
-          extra={
-            <div className="mt-2.5 mb-0.5 flex gap-2">
-              <button
-                type="button"
-                onClick={approve}
-                className="rounded-full bg-tint px-4 py-[5px] text-[15px] font-semibold text-white transition-opacity active:opacity-60"
-              >
-                Approve
-              </button>
-              <button
-                type="button"
-                onClick={() => setRejecting(true)}
-                className="rounded-full bg-fill px-4 py-[5px] text-[15px] font-semibold text-tint transition-opacity active:opacity-60"
-              >
-                Reject
-              </button>
-            </div>
-          }
-        />
-      </SwipeRow>
+    <Exit gone={gone}>
+      <DeadlineCard
+        post={post}
+        footer={
+          <div className="flex gap-2">
+            <GlowButton className="flex-1" onClick={() => run(() => approvePost(post.id), "Approved. Everyone's being notified.")}>
+              Approve
+            </GlowButton>
+            <Link
+              href={`/posts/${post.id}/edit?back=/admin`}
+              className="inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.04] px-4 text-[15px] font-medium text-neutral-200 hover:bg-white/[0.08]"
+            >
+              Edit
+            </Link>
+            <GhostButton tone="danger" onClick={() => setRejecting(true)}>
+              Reject
+            </GhostButton>
+          </div>
+        }
+      />
       <PromptAlert
         open={rejecting}
-        title="Reject Post?"
+        title="Reject this post?"
         message={`“${post.title}” won't be shown. ${post.author_name ?? "The poster"} will see your reason.`}
         placeholder="Reason (optional)"
         confirmLabel="Reject"
@@ -99,35 +82,67 @@ export function QueueRow({ post }: { post: Post }) {
           run(() => rejectPost(post.id, reason), "Rejected");
         }}
       />
-    </Collapse>
+    </Exit>
   );
 }
 
-/** "My posts" row: swipe left to edit (while pending) or withdraw/delete. */
-export function MineRow({ post }: { post: Post }) {
+const STATUS = {
+  pending: { label: "Waiting for approval", cls: "border-yellow/30 bg-yellow/10 text-yellow" },
+  approved: { label: "Live", cls: "border-green/30 bg-green/10 text-green" },
+  rejected: { label: "Not approved", cls: "border-red/30 bg-red/10 text-red" },
+} as const;
+
+/** "My posts" card: status, reason, and Edit / Withdraw. */
+export function MineCard({ post }: { post: Post }) {
   const { gone, run } = useRemovable();
-  const actions =
-    post.status === "approved"
-      ? []
-      : [
-          ...(post.status === "pending" ? [{ label: "Edit", color: "var(--gray)", href: `/posts/${post.id}/edit?back=/mine` }] : []),
-          {
-            label: post.status === "pending" ? "Withdraw" : "Delete",
-            color: "var(--red)",
-            onAction: () => run(() => deletePost(post.id), post.status === "pending" ? "Withdrawn" : "Deleted"),
-          },
-        ];
+  const [confirming, setConfirming] = useState(false);
+  const s = STATUS[post.status];
+  const verb = post.status === "pending" ? "Withdraw" : "Delete";
 
   return (
-    <Collapse gone={gone}>
-      <SwipeRow trailing={actions}>
-        <PostRow
-          post={post}
-          showAuthor={false}
-          muted={post.status === "rejected"}
-          extra={post.status === "rejected" && post.reject_reason ? <p className="mt-1 text-[15px] leading-5 text-red">Reason: {post.reject_reason}</p> : null}
-        />
-      </SwipeRow>
-    </Collapse>
+    <Exit gone={gone}>
+      <div className="mb-2 px-1">
+        <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${s.cls}`}>
+          <span className={`size-1.5 rounded-full bg-current ${post.status === "pending" ? "animate-pulse" : ""}`} />
+          {s.label}
+        </span>
+      </div>
+      <DeadlineCard
+        post={post}
+        showAuthor={false}
+        muted={post.status === "rejected"}
+        footer={
+          post.status === "approved" ? null : (
+            <div className="space-y-3">
+              {post.status === "rejected" && post.reject_reason && (
+                <p className="rounded-xl border border-red/20 bg-red/[0.06] px-3 py-2 text-sm text-red">Reason: {post.reject_reason}</p>
+              )}
+              <div className="flex gap-2">
+                {post.status === "pending" && (
+                  <Link
+                    href={`/posts/${post.id}/edit?back=/mine`}
+                    className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[15px] font-medium text-neutral-200 hover:bg-white/[0.08]"
+                  >
+                    Edit
+                  </Link>
+                )}
+                {confirming ? (
+                  <>
+                    <GhostButton tone="danger" className="flex-1" onClick={() => run(() => deletePost(post.id), post.status === "pending" ? "Withdrawn" : "Deleted")}>
+                      Yes, {verb.toLowerCase()}
+                    </GhostButton>
+                    <GhostButton onClick={() => setConfirming(false)}>No</GhostButton>
+                  </>
+                ) : (
+                  <GhostButton tone="danger" className="flex-1" onClick={() => setConfirming(true)}>
+                    {verb}
+                  </GhostButton>
+                )}
+              </div>
+            </div>
+          )
+        }
+      />
+    </Exit>
   );
 }

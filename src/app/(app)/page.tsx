@@ -1,16 +1,17 @@
-import { FeedTabs, NewPostButton } from "@/components/feed-tabs";
+import { FeedTabs } from "@/components/feed-tabs";
+import { PageHead } from "@/components/glass/page-head";
 import { HomeView } from "@/components/home-view";
-import { NavBar } from "@/components/ios/nav-bar";
 import { NotificationBanner } from "@/components/notifications";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { getMe, getSession } from "@/lib/me";
+import { groupOf } from "@/lib/time";
 import type { Post } from "@/lib/types";
 
 export default async function Home() {
   const { supabase, batch } = await getSession();
   const now = Date.now();
 
-  const [{ isAdmin }, { data }] = await Promise.all([
+  const [{ profile, isAdmin }, { data }] = await Promise.all([
     getMe(),
     supabase
       .from("posts")
@@ -21,15 +22,21 @@ export default async function Home() {
       .order("deadline", { ascending: true, nullsFirst: false })
       .returns<Post[]>(),
   ]);
+  const posts = data ?? [];
+  const week = posts.filter((p) => p.deadline && ["Today", "Tomorrow", "This week"].includes(groupOf(p.deadline, now))).length;
+  const first = profile.name?.split(" ")[0] ?? "there";
 
   return (
-    <>
-      <NavBar title="Deadlines" right={<NewPostButton />} />
-      <PullToRefresh>
-        <FeedTabs active="upcoming" />
-        <NotificationBanner />
-        <HomeView posts={data ?? []} isAdmin={isAdmin} now={now} />
-      </PullToRefresh>
-    </>
+    <PullToRefresh>
+      <PageHead
+        title="Deadlines"
+        generate
+        subtitle={week === 0 ? `Nothing due this week, ${first}. Enjoy it.` : `${first}, you have ${week} ${week === 1 ? "deadline" : "deadlines"} this week.`}
+        right={<FeedTabs active="upcoming" />}
+        className="flex-col items-start md:flex-row md:items-end"
+      />
+      <NotificationBanner />
+      <HomeView posts={posts} isAdmin={isAdmin} now={now} />
+    </PullToRefresh>
   );
 }

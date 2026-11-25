@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { Flash } from "@/components/flash";
+import { Backdrop } from "@/components/glass/backdrop";
 import { Nav } from "@/components/nav";
 import { Toaster } from "@/components/toaster";
 import { getMe, getSession } from "@/lib/me";
@@ -14,7 +15,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <>
-      <main className="mx-auto max-w-xl pb-[calc(49px+env(safe-area-inset-bottom)+24px)]">{children}</main>
+      <Backdrop />
+      <main className="mx-auto max-w-6xl px-4 pb-[calc(96px+env(safe-area-inset-bottom))] md:px-8 md:pb-36">{children}</main>
       <Nav isAdmin={isAdmin} pending={isAdmin ? (count ?? 0) : 0} />
       <Toaster />
       <Suspense>

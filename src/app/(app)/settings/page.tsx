@@ -1,5 +1,5 @@
-import { NavBar } from "@/components/ios/nav-bar";
-import { Row, Section } from "@/components/ios/list";
+import { GlassCard } from "@/components/glass/glass-card";
+import { PageHead } from "@/components/glass/page-head";
 import { NotificationSettings } from "@/components/notifications";
 import { getMe } from "@/lib/me";
 
@@ -16,36 +16,31 @@ export default async function Settings() {
     .toUpperCase();
 
   return (
-    <>
-      <NavBar title="Settings" />
-
-      <Section>
-        <div className="flex items-center gap-4 px-4 py-3">
-          {/* Contacts-style monogram */}
-          <span className="flex size-[60px] shrink-0 items-center justify-center rounded-full bg-[linear-gradient(180deg,#a5abb8,#858994)] text-[24px] font-medium text-white">
-            {initials}
-          </span>
-          <div className="min-w-0">
-            <p className="truncate text-[22px] leading-7">{name}</p>
-            <p className="truncate text-[15px] text-label-2">{profile.email}</p>
+    <div className="mx-auto max-w-2xl">
+      <PageHead title="Settings" />
+      <div className="flex flex-col gap-4">
+        <GlassCard>
+          <div className="flex items-center gap-4 p-5 md:p-6">
+            <span className="relative flex size-14 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-gradient-to-br from-neutral-700 to-neutral-900 text-lg font-bold text-white">
+              {initials}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-lg font-semibold text-neutral-100">{name}</p>
+              <p className="truncate text-sm text-neutral-500">{profile.email}</p>
+            </div>
+            <div className="hidden gap-2 sm:flex">
+              <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-neutral-400">{profile.batch.toUpperCase()}</span>
+              {isAdmin && <span className="rounded-full border border-tint/30 bg-tint/10 px-2.5 py-0.5 text-xs text-tint">Admin</span>}
+            </div>
           </div>
-        </div>
-      </Section>
+        </GlassCard>
 
-      <NotificationSettings />
+        <NotificationSettings />
 
-      <Section header="Account">
-        <Row title="Batch" value={profile.batch.toUpperCase()} />
-        <Row title="Role" value={isAdmin ? "Admin" : "Member"} />
-      </Section>
-
-      <form action="/auth/signout" method="post">
-        <Section>
-          <button className="block w-full py-[11px] text-center text-[17px] text-red active:bg-cell-2">Sign Out</button>
-        </Section>
-      </form>
-
-      <p className="pb-4 text-center text-[13px] text-label-3">Due</p>
-    </>
+        <form action="/auth/signout" method="post">
+          <button className="w-full rounded-full border border-red/20 bg-red/[0.05] py-3 text-[15px] font-medium text-red transition-colors hover:bg-red/10">Sign out</button>
+        </form>
+      </div>
+    </div>
   );
 }

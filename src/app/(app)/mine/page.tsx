@@ -1,20 +1,11 @@
 import Link from "next/link";
-import { NewPostButton } from "@/components/feed-tabs";
-import { PersonIcon } from "@/components/ios/icons";
-import { NavBar } from "@/components/ios/nav-bar";
-import { Section } from "@/components/ios/list";
-import { MineRow } from "@/components/post-actions";
+import { PageHead } from "@/components/glass/page-head";
+import { MineCard } from "@/components/post-actions";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { getSession } from "@/lib/me";
-import type { Post, PostStatus } from "@/lib/types";
+import type { Post } from "@/lib/types";
 
-export const metadata = { title: "My Posts · Due" };
-
-const SECTIONS: { status: PostStatus; header: string; footer?: string }[] = [
-  { status: "pending", header: "Waiting for Approval", footer: "Swipe left to edit or withdraw." },
-  { status: "approved", header: "Live" },
-  { status: "rejected", header: "Not Approved", footer: "Swipe left to delete." },
-];
+export const metadata = { title: "My posts · Due" };
 
 export default async function Mine() {
   const { supabase, userId } = await getSession();
@@ -28,32 +19,23 @@ export default async function Mine() {
   const posts = data ?? [];
 
   return (
-    <>
-      <NavBar title="My Posts" right={<NewPostButton />} />
-      <PullToRefresh>
-        {posts.length === 0 ? (
-          <div className="flex flex-col items-center px-8 pt-16 text-center">
-            <PersonIcon size={48} className="text-label-3" />
-            <p className="mt-3 text-[22px] font-bold">No Posts Yet</p>
-            <p className="mt-1 text-[15px] text-label-2">Seen a deadline others might miss? Post it and an admin will check it.</p>
-            <Link href="/new" className="mt-4 text-[17px] text-tint active:opacity-30">
-              Post a Deadline
-            </Link>
-          </div>
-        ) : (
-          SECTIONS.map(({ status, header, footer }) => {
-            const list = posts.filter((p) => p.status === status);
-            if (list.length === 0) return null;
-            return (
-              <Section key={status} header={header} footer={footer}>
-                {list.map((p) => (
-                  <MineRow key={p.id} post={p} />
-                ))}
-              </Section>
-            );
-          })
-        )}
-      </PullToRefresh>
-    </>
+    <PullToRefresh>
+      <PageHead title="My posts" subtitle="What you've submitted and where it stands." />
+      {posts.length === 0 ? (
+        <div className="flex min-h-56 flex-col items-center justify-center rounded-[22px] border border-dashed border-white/10 p-8 text-center">
+          <p className="text-chrome text-2xl font-bold">Nothing posted yet</p>
+          <p className="mt-2 text-sm text-neutral-400">Seen a deadline others might miss? Post it and an admin will check it.</p>
+          <Link href="/new" className="mt-5 rounded-full bg-white px-5 py-2 text-sm font-semibold text-black">
+            Post a deadline
+          </Link>
+        </div>
+      ) : (
+        <div className="grid gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+          {posts.map((p) => (
+            <MineCard key={p.id} post={p} />
+          ))}
+        </div>
+      )}
+    </PullToRefresh>
   );
 }

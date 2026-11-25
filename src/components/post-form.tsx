@@ -6,21 +6,14 @@ import { AnimatePresence, motion } from "motion/react";
 import { savePost, type FormState } from "@/app/(app)/actions";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { Switch } from "@/components/animate-ui/components/radix/switch";
-import { CalendarIcon, ClockIcon } from "@/components/ios/icons";
-import { RowIcon, Section } from "@/components/ios/list";
-import { Spinner } from "@/components/ios/spinner";
-import { subjectOf } from "@/lib/subject";
+import { GlowButton } from "@/components/glass/buttons";
+import { GlassCard } from "@/components/glass/glass-card";
+import { fieldClass, GlowField, Label } from "@/components/glass/input";
+import { PageHead } from "@/components/glass/page-head";
+import { DEFAULT_SUBJECT, subjectOf } from "@/lib/subject";
 
 type Defaults = { id?: string; title?: string; url?: string; note?: string | null; date?: string; time?: string; tba?: boolean };
 
-const field = "w-full bg-transparent text-[17px] leading-[22px] outline-none placeholder:text-label-3";
-
-function prettyDate(date: string) {
-  if (!date) return "";
-  return new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${date}T00:00:00Z`));
-}
-
-/** New / edit post, laid out like an iOS modal sheet (Cancel · Title · Post). */
 export function PostForm({
   defaults = {},
   minDate,
@@ -44,105 +37,95 @@ export function PostForm({
   const subject = subjectOf(title);
 
   return (
-    <form id="post-form" action={action}>
-      {/* Sheet header */}
-      <div className="hairline-b sticky top-0 z-30 bg-bar pt-[env(safe-area-inset-top)] backdrop-blur-xl backdrop-saturate-150">
-        <div className="mx-auto grid h-14 max-w-xl grid-cols-[1fr_auto_1fr] items-center px-4">
-          <Link href={back} className="justify-self-start text-[17px] text-tint active:opacity-30">
+    <div className="mx-auto max-w-2xl">
+      <PageHead
+        title={heading}
+        subtitle={hint}
+        right={
+          <Link href={back} className="mb-1 shrink-0 rounded-full border border-white/10 px-4 py-1.5 text-sm text-neutral-300 hover:bg-white/[0.06]">
             Cancel
           </Link>
-          <span className="text-[17px] font-semibold">{heading}</span>
-          <button disabled={pending || !title.trim()} className="justify-self-end text-[17px] font-semibold text-tint active:opacity-30 disabled:text-label-3">
-            {pending ? <Spinner size={18} className="text-label-2" /> : submitLabel}
-          </button>
-        </div>
-      </div>
+        }
+      />
+      <GlassCard>
+        <form action={action} className="flex flex-col gap-6 p-5 md:p-8">
+          {defaults.id && <input type="hidden" name="id" value={defaults.id} />}
+          <input type="hidden" name="back" value={back} />
+          <input type="hidden" name="tba" value={hasDate ? "" : "on"} />
 
-      <div className="pt-6">
-        {defaults.id && <input type="hidden" name="id" value={defaults.id} />}
-        <input type="hidden" name="back" value={back} />
-        <input type="hidden" name="tba" value={hasDate ? "" : "on"} />
-
-        <Section>
-          <div className="flex items-center gap-3 pl-4">
-            <span aria-hidden className="size-[9px] shrink-0 rounded-full transition-colors" style={{ background: title ? subject.color : "var(--label-3)" }} />
-            <div className="row-sep flex-1 py-[11px] pr-4">
-              <input name="title" required maxLength={120} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className={field} autoFocus={!defaults.id} />
-            </div>
-          </div>
-          <div className="pl-[37px]">
-            <div className="row-sep py-[11px] pr-4">
-              <input
-                name="url"
-                required
-                inputMode="url"
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-                defaultValue={defaults.url}
-                placeholder="Link"
-                className={field}
-              />
-            </div>
-          </div>
-          <div className="pl-[37px]">
-            <div className="py-[11px] pr-4">
-              <textarea name="note" rows={3} maxLength={500} defaultValue={defaults.note ?? ""} placeholder="Notes" className={`${field} resize-none`} />
-            </div>
-          </div>
-        </Section>
-
-        <Section
-          footer={
-            hasDate
-              ? "Times are in Indian time. Everyone gets reminders 24 hours and 2 hours before."
-              : "It'll show as “date not announced”. When you add the date later, everyone is notified."
-          }
-        >
-          <div className="flex items-center gap-3 pl-4">
-            <RowIcon color="var(--red)">
-              <CalendarIcon size={18} filled />
-            </RowIcon>
-            <div className="row-sep flex flex-1 items-center gap-3 py-2 pr-4">
-              <div className="min-w-0 flex-1">
-                <p className="text-[17px] leading-[22px]">Date</p>
-                {hasDate && date && <p className="text-[13px] leading-4 text-tint">{prettyDate(date)}</p>}
-              </div>
-              <Switch checked={hasDate} onCheckedChange={setHasDate} aria-label="Has a deadline date" />
-            </div>
-          </div>
-          <AutoHeight deps={[hasDate]}>
+          <div>
+            <Label htmlFor="title">What&apos;s due?</Label>
+            <GlowField>
+              <input id="title" name="title" required maxLength={120} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="DSA Assignment 4" className={`${fieldClass} text-lg font-medium`} autoFocus={!defaults.id} />
+            </GlowField>
             <AnimatePresence initial={false}>
-              {hasDate && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <div className="flex items-center gap-3 pl-4">
-                    <span className="w-[29px]" />
-                    <div className="row-sep flex flex-1 items-center justify-between gap-3 py-[7px] pr-4">
-                      <span className="text-[17px]">Day</span>
-                      <input type="date" name="date" aria-label="Date" min={minDate} value={date} onChange={(e) => setDate(e.target.value)} required={hasDate} className="ios-picker" />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 pl-4">
-                    <RowIcon color="var(--tint)">
-                      <ClockIcon size={18} />
-                    </RowIcon>
-                    <div className="flex flex-1 items-center justify-between gap-3 py-[7px] pr-4">
-                      <span className="text-[17px]">Time</span>
-                      <input type="time" name="time" aria-label="Time" value={time} onChange={(e) => setTime(e.target.value)} required={hasDate} className="ios-picker" />
-                    </div>
-                  </div>
-                </motion.div>
+              {subject !== DEFAULT_SUBJECT && (
+                <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-2 flex items-center gap-2 text-xs text-neutral-400">
+                  <span className="size-1.5 rounded-full" style={{ background: subject.color, boxShadow: `0 0 8px 1px ${subject.color}` }} />
+                  Tagged {subject.label}
+                </motion.p>
               )}
             </AnimatePresence>
-          </AutoHeight>
-        </Section>
+          </div>
 
-        {(state.error || hint) && (
-          <p className={`mx-8 -mt-4 mb-8 text-[13px] leading-[18px] ${state.error ? "text-red" : "text-label-2"}`} role={state.error ? "alert" : undefined}>
-            {state.error ?? hint}
-          </p>
-        )}
-      </div>
-    </form>
+          <div>
+            <Label htmlFor="url">Link</Label>
+            <GlowField>
+              <input id="url" name="url" required inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} defaultValue={defaults.url} placeholder="forms.gle/… or a classroom link" className={fieldClass} />
+            </GlowField>
+          </div>
+
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-sm font-medium text-neutral-300">Deadline</span>
+              <label className="flex cursor-pointer items-center gap-3 text-sm text-neutral-400">
+                Has a date
+                <Switch checked={hasDate} onCheckedChange={setHasDate} aria-label="Has a deadline date" />
+              </label>
+            </div>
+            <AutoHeight deps={[hasDate]}>
+              <AnimatePresence mode="popLayout" initial={false}>
+                {hasDate ? (
+                  <motion.div key="d" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="grid grid-cols-[1fr_auto] gap-3 p-0.5">
+                    <GlowField>
+                      <input type="date" name="date" aria-label="Date" min={minDate} value={date} onChange={(e) => setDate(e.target.value)} required className={`${fieldClass} glass-picker`} />
+                    </GlowField>
+                    <GlowField>
+                      <input type="time" name="time" aria-label="Time" value={time} onChange={(e) => setTime(e.target.value)} required className={`${fieldClass} glass-picker`} />
+                    </GlowField>
+                  </motion.div>
+                ) : (
+                  <motion.p key="t" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="rounded-xl border border-dashed border-yellow/30 bg-yellow/[0.05] px-4 py-3 text-sm text-yellow">
+                    Posted as <b>date TBA</b>. When you add the date later, everyone is notified.
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </AutoHeight>
+            {hasDate && <p className="mt-2 text-xs text-neutral-500">Indian time. Reminders go out 24 hours and 2 hours before.</p>}
+          </div>
+
+          <div>
+            <Label htmlFor="note">
+              Note <span className="text-neutral-500">· optional</span>
+            </Label>
+            <GlowField>
+              <textarea id="note" name="note" rows={3} maxLength={500} defaultValue={defaults.note ?? ""} placeholder="Submit as PDF, one per group…" className={`${fieldClass} resize-none`} />
+            </GlowField>
+          </div>
+
+          <AnimatePresence>
+            {state.error && (
+              <motion.p role="alert" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0, x: [0, -6, 6, -3, 3, 0] }} exit={{ opacity: 0 }} className="rounded-xl border border-red/25 bg-red/[0.07] px-4 py-3 text-sm text-red">
+                {state.error}
+              </motion.p>
+            )}
+          </AnimatePresence>
+
+          <GlowButton type="submit" loading={pending} disabled={!title.trim()} className="w-full">
+            {submitLabel} →
+          </GlowButton>
+        </form>
+      </GlassCard>
+    </div>
   );
 }

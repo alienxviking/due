@@ -1,14 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
 import { sendTestPush } from "@/app/(app)/push-actions";
 import { Switch } from "@/components/animate-ui/components/radix/switch";
-import { BellIcon, PhoneIcon, PaperplaneIcon, ShareIcon, XIcon } from "@/components/ios/icons";
-import { Row, RowIcon, Section } from "@/components/ios/list";
+import { GhostButton, WhiteButton } from "@/components/glass/buttons";
+import { GlassCard } from "@/components/glass/glass-card";
+import { BellIcon, ShareIcon, XIcon } from "@/components/ios/icons";
 import { Spinner } from "@/components/ios/spinner";
+import { createClient } from "@/lib/supabase/client";
 
 type Status = "loading" | "ios-install" | "unsupported" | "denied" | "off" | "on";
 
@@ -103,15 +104,25 @@ function usePush() {
 function IOSSteps() {
   const step = (n: number, body: React.ReactNode) => (
     <li className="flex gap-3">
-      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-fill text-[13px] font-semibold">{n}</span>
-      <span className="pt-0.5">{body}</span>
+      <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-xs font-semibold text-neutral-300">{n}</span>
+      <span className="pt-0.5 text-neutral-300">{body}</span>
     </li>
   );
   return (
-    <ol className="flex flex-col gap-2.5 px-4 py-3 text-[15px] leading-5">
-      {step(1, <>In Safari, tap <ShareIcon size={16} className="inline -mt-1 text-tint" /> <b>Share</b></>)}
-      {step(2, <>Choose <b>Add to Home Screen</b></>)}
-      {step(3, <>Open Due from your Home Screen and turn on notifications here</>)}
+    <ol className="mt-4 flex flex-col gap-2.5 text-sm">
+      {step(
+        1,
+        <>
+          In Safari, tap <ShareIcon size={15} className="-mt-1 inline text-tint" /> <b className="text-white">Share</b>
+        </>,
+      )}
+      {step(
+        2,
+        <>
+          Choose <b className="text-white">Add to Home Screen</b>
+        </>,
+      )}
+      {step(3, <>Open Due from your Home Screen and turn on notifications</>)}
     </ol>
   );
 }
@@ -132,16 +143,16 @@ function useInstallPrompt() {
   return { can, install };
 }
 
-/** Settings: Notifications section (iOS Settings rows). */
+/** Settings card for notifications. */
 export function NotificationSettings() {
   const { status, busy, error, enable, disable } = usePush();
   const [testing, setTesting] = useState(false);
   const { can, install } = useInstallPrompt();
 
-  const footer =
+  const note =
     error ??
     (status === "denied"
-      ? "Notifications are blocked for Due. Allow them in your phone's settings, then come back."
+      ? "Blocked for Due. Allow notifications in your phone or browser settings, then come back."
       : status === "unsupported"
         ? "This browser can't receive notifications. Use Chrome on Android or Safari on iPhone."
         : status === "ios-install"
@@ -149,48 +160,49 @@ export function NotificationSettings() {
           : "New deadlines, plus reminders 24 hours and 2 hours before each one.");
 
   return (
-    <>
-      <Section header="Notifications" footer={footer}>
-        <Row
-          icon={<RowIcon color="var(--red)"><BellIcon size={18} /></RowIcon>}
-          title="Allow Notifications"
-          accessory={
-            status === "loading" ? (
-              <Spinner size={18} className="text-label-2" />
-            ) : status === "on" || status === "off" ? (
-              <Switch checked={status === "on"} disabled={busy} onCheckedChange={(v) => (v ? enable() : disable())} aria-label="Notifications" />
-            ) : (
-              <span className="text-[17px] text-label-2">{status === "denied" ? "Blocked" : "Unavailable"}</span>
-            )
-          }
-        />
-        {status === "on" && (
-          <Row
-            icon={<RowIcon color="var(--tint)"><PaperplaneIcon size={16} /></RowIcon>}
-            title="Send Test Notification"
-            tinted
-            accessory={testing ? <Spinner size={18} className="text-label-2" /> : undefined}
-            onClick={async () => {
-              setTesting(true);
-              const n = await sendTestPush().catch(() => 0);
-              setTesting(false);
-              if (n > 0) toast.success("Sent. It should arrive in a few seconds.");
-              else toast.error("No devices found. Turn notifications off and on again.");
-            }}
-          />
-        )}
+    <GlassCard>
+      <div className="p-5 md:p-6">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="flex size-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05] text-tint">
+              <BellIcon size={20} />
+            </span>
+            <div>
+              <p className="font-semibold text-neutral-100">Notifications</p>
+              <p className="text-sm text-neutral-500">{status === "on" ? "On for this device" : status === "loading" ? "Checking…" : "Off"}</p>
+            </div>
+          </div>
+          {(status === "on" || status === "off") && (
+            <Switch checked={status === "on"} disabled={busy} onCheckedChange={(v) => (v ? enable() : disable())} aria-label="Notifications" />
+          )}
+        </div>
+        <p className={`mt-4 text-sm ${error ? "text-red" : "text-neutral-400"}`}>{note}</p>
         {status === "ios-install" && <IOSSteps />}
-      </Section>
-      {can && (
-        <Section>
-          <Row icon={<RowIcon color="var(--green)"><PhoneIcon size={17} /></RowIcon>} title="Install Due as an App" tinted onClick={install} />
-        </Section>
-      )}
-    </>
+        {(status === "on" || can) && (
+          <div className="mt-5 flex flex-wrap gap-2">
+            {status === "on" && (
+              <GhostButton
+                disabled={testing}
+                onClick={async () => {
+                  setTesting(true);
+                  const n = await sendTestPush().catch(() => 0);
+                  setTesting(false);
+                  if (n > 0) toast.success("Sent. It should arrive in a few seconds.");
+                  else toast.error("No devices found. Turn notifications off and on again.");
+                }}
+              >
+                {testing ? <Spinner size={16} /> : "Send a test"}
+              </GhostButton>
+            )}
+            {can && <GhostButton onClick={install}>Install Due as an app</GhostButton>}
+          </div>
+        )}
+      </div>
+    </GlassCard>
   );
 }
 
-/** Inset card at the top of the feed until notifications are on. Dismissible. */
+/** Card at the top of the feed until notifications are on. Dismissible. */
 export function NotificationBanner() {
   const { status, busy, error, enable } = usePush();
   const [dismissed, setDismissed] = useState(true);
@@ -214,27 +226,32 @@ export function NotificationBanner() {
   return (
     <AnimatePresence initial={false}>
       {show && (
-        <motion.div exit={{ opacity: 0, height: 0, marginBottom: 0 }} className="mx-4 mb-6 overflow-hidden rounded-[12px] bg-cell">
-          <div className="flex items-start gap-3 px-4 pt-3.5 pb-3">
-            <RowIcon color="var(--red)"><BellIcon size={18} /></RowIcon>
-            <div className="min-w-0 flex-1">
-              <p className="text-[17px] font-semibold leading-[22px]">{status === "ios-install" ? "Add Due to Home Screen" : "Turn On Notifications"}</p>
-              <p className="mt-0.5 text-[15px] leading-5 text-label-2">
-                {status === "ios-install" ? "iPhone only sends reminders to apps on the Home Screen." : "Get reminders 24 hours and 2 hours before deadlines."}
-              </p>
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0, marginBottom: 0 }} className="mb-6">
+          <GlassCard>
+            <div className="flex flex-col gap-4 p-5 md:flex-row md:items-center">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05] text-tint">
+                <BellIcon size={20} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-neutral-100">{status === "ios-install" ? "Add Due to your Home Screen" : "Never miss a deadline"}</p>
+                <p className="text-sm text-neutral-400">
+                  {status === "ios-install" ? "iPhone only sends reminders to apps on the Home Screen." : "Turn on reminders for 24 hours and 2 hours before."}
+                </p>
+                {status === "ios-install" && <IOSSteps />}
+              </div>
+              <div className="flex items-center gap-2">
+                {status === "off" && (
+                  <WhiteButton onClick={enable} loading={busy}>
+                    Turn on
+                  </WhiteButton>
+                )}
+                <button onClick={dismiss} aria-label="Dismiss" className="flex size-11 items-center justify-center rounded-full text-neutral-500 hover:bg-white/[0.06] hover:text-white">
+                  <XIcon size={16} />
+                </button>
+              </div>
             </div>
-            <button onClick={dismiss} aria-label="Dismiss" className="-mt-1 -mr-1.5 flex size-7 items-center justify-center rounded-full bg-fill text-label-2 active:opacity-50">
-              <XIcon size={14} />
-            </button>
-          </div>
-          {status === "ios-install" ? (
-            <div className="hairline-t"><IOSSteps /></div>
-          ) : (
-            <button onClick={enable} disabled={busy} className="hairline-t flex h-11 w-full items-center justify-center text-[17px] text-tint active:bg-cell-2">
-              {busy ? <Spinner size={18} /> : "Turn On"}
-            </button>
-          )}
-          {error && <p className="px-4 pb-3 text-[13px] text-red">{error}</p>}
+            {error && <p className="px-5 pb-4 text-sm text-red">{error}</p>}
+          </GlassCard>
         </motion.div>
       )}
     </AnimatePresence>
