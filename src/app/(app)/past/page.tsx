@@ -1,34 +1,36 @@
 import { Empty, FeedTabs, PageHeader } from "@/components/page-header";
 import { PostCard } from "@/components/post-card";
-import { getMe } from "@/lib/me";
+import { getMe, getSession } from "@/lib/me";
 import type { Post } from "@/lib/types";
 
 export const metadata = { title: "Past · Due" };
 
 export default async function Past() {
-  const { supabase, profile, isAdmin } = await getMe();
-
-  const { data } = await supabase
-    .from("posts")
-    .select("*")
-    .eq("status", "approved")
-    .eq("batch", profile.batch)
-    .lt("deadline", new Date().toISOString())
-    .order("deadline", { ascending: false })
-    .limit(50)
-    .returns<Post[]>();
+  const { supabase, batch } = await getSession();
+  const [{ isAdmin }, { data }] = await Promise.all([
+    getMe(),
+    supabase
+      .from("posts")
+      .select("*")
+      .eq("status", "approved")
+      .eq("batch", batch)
+      .lt("deadline", new Date().toISOString())
+      .order("deadline", { ascending: false })
+      .limit(50)
+      .returns<Post[]>(),
+  ]);
   const posts = data ?? [];
 
   return (
     <>
-      <PageHeader title="Due" subtitle="Deadlines that have passed" />
+      <PageHeader title="Past" subtitle="Deadlines that have closed" />
       <FeedTabs active="past" />
       {posts.length === 0 ? (
-        <Empty>No past deadlines yet.</Empty>
+        <Empty icon="🗂" title="No past deadlines yet" />
       ) : (
-        <div className="flex flex-col gap-3 opacity-80">
+        <div className="rise flex flex-col gap-2.5 opacity-75">
           {posts.map((p) => (
-            <PostCard key={p.id} post={p} canEdit={isAdmin} />
+            <PostCard key={p.id} post={p} editHref={isAdmin ? `/posts/${p.id}/edit` : undefined} />
           ))}
         </div>
       )}

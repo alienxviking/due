@@ -137,14 +137,14 @@ function InstallButton() {
         window.__installPrompt = undefined;
         setCan(false);
       }}
-      className="w-full rounded-xl border border-line px-4 py-3 font-medium"
+      className="w-full rounded-xl bg-surface-2 px-4 py-3 font-semibold"
     >
       Install Due as an app
     </button>
   );
 }
 
-const primary = "rounded-xl bg-accent px-4 py-3 font-semibold text-bg transition active:scale-[0.98] disabled:opacity-60";
+const primary = "rounded-xl bg-accent px-4 py-3 font-semibold text-white transition active:scale-[0.98] disabled:opacity-60";
 
 /** Full controls, for the Settings page. */
 export function NotificationSettings() {
@@ -152,7 +152,7 @@ export function NotificationSettings() {
   const [testMsg, setTestMsg] = useState<string | null>(null);
 
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
+    <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 shadow-card">
       <div>
         <h2 className="font-semibold">Notifications</h2>
         <p className="text-sm text-muted">New deadlines, plus reminders 24 hours and 2 hours before.</p>
@@ -160,7 +160,7 @@ export function NotificationSettings() {
 
       {status === "loading" && <p className="text-sm text-muted">Checking…</p>}
       {status === "ios-install" && (
-        <div className="rounded-xl bg-bg p-3">
+        <div className="rounded-xl bg-surface-2 p-3">
           <p className="text-sm font-medium">On iPhone, notifications only work once Due is on your home screen.</p>
           <IOSSteps />
         </div>
@@ -186,11 +186,11 @@ export function NotificationSettings() {
                 const n = await sendTestPush();
                 setTestMsg(n > 0 ? "Sent. It should arrive in a few seconds." : "No devices found. Try turning notifications off and on.");
               }}
-              className="flex-1 rounded-xl border border-line px-4 py-2.5 text-sm font-medium"
+              className="flex-1 rounded-xl bg-surface-2 px-4 py-2.5 text-sm font-semibold"
             >
               Send a test
             </button>
-            <button onClick={disable} disabled={busy} className="flex-1 rounded-xl border border-line px-4 py-2.5 text-sm font-medium text-muted">
+            <button onClick={disable} disabled={busy} className="flex-1 rounded-xl bg-surface-2 px-4 py-2.5 text-sm font-semibold text-muted">
               Turn off
             </button>
           </div>
@@ -225,7 +225,7 @@ export function NotificationBanner() {
   };
 
   return (
-    <div className="mb-4 rounded-2xl border border-accent/40 bg-accent/10 p-4">
+    <div className="rise mb-5 rounded-2xl border border-line bg-surface p-4 shadow-card">
       <div className="flex items-start justify-between gap-3">
         <p className="font-medium">{status === "ios-install" ? "Add Due to your home screen" : "Get reminders before things are due"}</p>
         <button onClick={dismiss} aria-label="Dismiss" className="-mt-1 -mr-1 px-1 text-lg leading-none text-muted">

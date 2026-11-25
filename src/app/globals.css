@@ -1,30 +1,56 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #14161c;
-  --surface: #1c1f27;
-  --line: #2b2f3a;
-  --text: #f4f1ea;
-  --muted: #9a9fab;
-  --accent: #ff6b3d;
-  --ok: #4ade80;
-  --warn: #facc15;
+  --bg: #f5f3ee;
+  --surface: #ffffff;
+  --surface-2: #efece5;
+  --line: #e4e0d6;
+  --text: #17181c;
+  --muted: #6b6f78;
+  --accent: #ee5420;
+  --accent-soft: #fde6dc;
+  --ok: #15803d;
+  --ok-soft: #dcf3e3;
+  --warn: #a16207;
+  --warn-soft: #fbf0d0;
+  --shadow: 0 1px 2px rgb(23 24 28 / 0.04), 0 4px 16px rgb(23 24 28 / 0.04);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #101216;
+    --surface: #181b21;
+    --surface-2: #20242c;
+    --line: #262a33;
+    --text: #f2efe8;
+    --muted: #8e94a0;
+    --accent: #ff6b3d;
+    --accent-soft: #3a2119;
+    --ok: #4ade80;
+    --ok-soft: #15291d;
+    --warn: #fbbf24;
+    --warn-soft: #2f2712;
+    --shadow: none;
+    color-scheme: dark;
+  }
 }
 
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-line: var(--line);
   --color-text: var(--text);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
   --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
   --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --shadow-card: var(--shadow);
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
-}
-
-html {
-  color-scheme: dark;
 }
 
 body {
@@ -32,7 +58,23 @@ body {
   color: var(--text);
   font-family: var(--font-sans);
   min-height: 100dvh;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
-    env(safe-area-inset-left);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
   -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Gentle entrance for lists, so new content doesn't just pop in. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.rise {
+  animation: rise 0.22s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+  }
 }

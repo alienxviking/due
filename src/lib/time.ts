@@ -47,6 +47,38 @@ export function fromISTParts(date: string, time: string): string | null {
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
+const tileFmt = new Intl.DateTimeFormat("en-IN", { timeZone: TZ, weekday: "short", day: "numeric", month: "short" });
+const timeFmt = new Intl.DateTimeFormat("en-IN", { timeZone: TZ, hour: "numeric", minute: "2-digit", hour12: true });
+
+/** { weekday: "Fri", day: "28", month: "Nov" } in IST, for the calendar tile on cards. */
+export function tileParts(iso: string) {
+  const p = Object.fromEntries(tileFmt.formatToParts(new Date(iso)).map((x) => [x.type, x.value]));
+  return { weekday: p.weekday, day: p.day, month: p.month };
+}
+
+export function formatTime(iso: string): string {
+  return timeFmt.format(new Date(iso)).replace(/\b(am|pm)\b/, (m) => m.toUpperCase());
+}
+
+export const GROUPS = ["Today", "Tomorrow", "This week", "Later", "Date TBA"] as const;
+export type Group = (typeof GROUPS)[number];
+
+/** Which feed section a deadline belongs to, by IST calendar day. */
+export function groupOf(iso: string | null, now = Date.now()): Group {
+  if (!iso) return "Date TBA";
+  const day = (d: number) => toISTParts(new Date(d).toISOString()).date;
+  const target = toISTParts(iso).date;
+  if (target <= day(now)) return "Today";
+  if (target === day(now + 86400e3)) return "Tomorrow";
+  if (target <= day(now + 6 * 86400e3)) return "This week";
+  return "Later";
+}
+
+/** Date string (IST) n days from today, for the quick-pick chips. */
+export function addDaysIST(n: number): string {
+  return toISTParts(new Date(Date.now() + n * 86400e3).toISOString()).date;
+}
+
 export function timeLeft(iso: string, now = Date.now()): { label: string; tone: "urgent" | "soon" | "calm" | "past" } {
   const ms = new Date(iso).getTime() - now;
   if (ms <= 0) return { label: "Closed", tone: "past" };
