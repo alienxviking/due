@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getMe } from "@/lib/me";
+import { getMe, getSession } from "@/lib/me";
 import { fromISTParts } from "@/lib/time";
 
 export type FormState = { error?: string };
@@ -50,18 +50,20 @@ export async function savePost(_: FormState, form: FormData): Promise<FormState>
   }
 
   revalidatePath("/", "layout");
-  redirect(isAdmin ? (id ? String(form.get("back") || "/") : "/") : "/mine");
+  const back = String(form.get("back") || "");
+  const safeBack = back.startsWith("/") && !back.startsWith("//") ? back : "/";
+  redirect(id ? safeBack : isAdmin ? "/" : "/mine?sent=1");
 }
 
 export async function approvePost(id: string) {
-  const { supabase } = await getMe();
+  const { supabase } = await getSession();
   const { error } = await supabase.from("posts").update({ status: "approved" }).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/", "layout");
 }
 
 export async function rejectPost(id: string, reason: string) {
-  const { supabase } = await getMe();
+  const { supabase } = await getSession();
   const { error } = await supabase
     .from("posts")
     .update({ status: "rejected", reject_reason: reason.trim().slice(0, 300) || null })
@@ -71,7 +73,7 @@ export async function rejectPost(id: string, reason: string) {
 }
 
 export async function deletePost(id: string) {
-  const { supabase } = await getMe();
+  const { supabase } = await getSession();
   const { error } = await supabase.from("posts").delete().eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/", "layout");
