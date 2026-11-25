@@ -1,6 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#14161c"/>
-  <circle cx="256" cy="256" r="150" fill="none" stroke="#2b2f3a" stroke-width="44"/>
-  <path d="M256 106 A150 150 0 0 1 398.7 302.4" fill="none" stroke="#ff6b3d" stroke-width="44" stroke-linecap="round"/>
-  <path d="M256 176 V256 L306 292" fill="none" stroke="#f4f1ea" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a9bff"/>
+      <stop offset="1" stop-color="#0063e6"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <!-- calendar page -->
+  <rect x="116" y="132" width="280" height="264" rx="44" fill="#fff"/>
+  <path d="M116 176a44 44 0 0 1 44-44h192a44 44 0 0 1 44 44v28H116z" fill="#ff3b30"/>
+  <rect x="176" y="104" width="22" height="64" rx="11" fill="#fff"/>
+  <rect x="314" y="104" width="22" height="64" rx="11" fill="#fff"/>
+  <!-- clock hands -->
+  <circle cx="256" cy="300" r="66" fill="none" stroke="#0063e6" stroke-width="20"/>
+  <path d="M256 262v40l26 18" fill="none" stroke="#0063e6" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

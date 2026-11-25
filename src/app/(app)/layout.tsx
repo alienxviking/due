@@ -14,7 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <>
-      <main className="mx-auto max-w-md px-4 pt-3 pb-36">{children}</main>
+      <main className="mx-auto max-w-xl pb-[calc(49px+env(safe-area-inset-bottom)+24px)]">{children}</main>
       <Nav isAdmin={isAdmin} pending={isAdmin ? (count ?? 0) : 0} />
       <Toaster />
       <Suspense>

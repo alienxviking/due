@@ -1,76 +1,94 @@
 @import "tailwindcss";
 
+/* iOS system colours (UIKit semantic colours), light and dark. */
 :root {
-  --bg: #f5f3ee;
-  --surface: #ffffff;
-  --surface-2: #efece5;
-  --line: #e4e0d6;
-  --text: #17181c;
-  --muted: #6b6f78;
-  --accent: #ee5420;
-  --accent-soft: #fde6dc;
-  --ok: #15803d;
-  --ok-soft: #dcf3e3;
-  --warn: #a16207;
-  --warn-soft: #fbf0d0;
-  --shadow: 0 1px 2px rgb(23 24 28 / 0.04), 0 4px 16px rgb(23 24 28 / 0.04);
+  --bg: #f2f2f7; /* systemGroupedBackground */
+  --cell: #ffffff; /* secondarySystemGroupedBackground */
+  --cell-2: #e5e5ea; /* systemGray5, pressed cells and tracks */
+  --sep: rgb(60 60 67 / 0.29); /* separator */
+  --label: #000000;
+  --label-2: rgb(60 60 67 / 0.6); /* secondaryLabel */
+  --label-3: rgb(60 60 67 / 0.3); /* tertiaryLabel */
+  --fill: rgb(120 120 128 / 0.12); /* tertiarySystemFill */
+  --tint: #007aff;
+  --red: #ff3b30;
+  --orange: #ff9500;
+  --yellow: #ffcc00;
+  --green: #34c759;
+  --indigo: #5856d6;
+  --gray: #8e8e93;
+  --bar: rgb(249 249 249 / 0.82); /* translucent bars */
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #101216;
-    --surface: #181b21;
-    --surface-2: #20242c;
-    --line: #262a33;
-    --text: #f2efe8;
-    --muted: #8e94a0;
-    --accent: #ff6b3d;
-    --accent-soft: #3a2119;
-    --ok: #4ade80;
-    --ok-soft: #15291d;
-    --warn: #fbbf24;
-    --warn-soft: #2f2712;
-    --shadow: none;
+    --bg: #000000;
+    --cell: #1c1c1e;
+    --cell-2: #2c2c2e;
+    --sep: rgb(84 84 88 / 0.65);
+    --label: #ffffff;
+    --label-2: rgb(235 235 245 / 0.6);
+    --label-3: rgb(235 235 245 / 0.3);
+    --fill: rgb(118 118 128 / 0.24);
+    --tint: #0a84ff;
+    --red: #ff453a;
+    --orange: #ff9f0a;
+    --yellow: #ffd60a;
+    --green: #30d158;
+    --indigo: #5e5ce6;
+    --gray: #8e8e93;
+    --bar: rgb(22 22 23 / 0.82);
     color-scheme: dark;
   }
 }
 
 @theme inline {
   --color-bg: var(--bg);
-  --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
-  --color-line: var(--line);
-  --color-text: var(--text);
-  --color-muted: var(--muted);
-  --color-accent: var(--accent);
-  --color-accent-soft: var(--accent-soft);
-  --color-ok: var(--ok);
-  --color-ok-soft: var(--ok-soft);
-  --color-warn: var(--warn);
-  --color-warn-soft: var(--warn-soft);
-  --shadow-card: var(--shadow);
-  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
-  --font-display: var(--font-bricolage), var(--font-geist-sans), system-ui, sans-serif;
+  --color-cell: var(--cell);
+  --color-cell-2: var(--cell-2);
+  --color-sep: var(--sep);
+  --color-label: var(--label);
+  --color-label-2: var(--label-2);
+  --color-label-3: var(--label-3);
+  --color-fill: var(--fill);
+  --color-tint: var(--tint);
+  --color-red: var(--red);
+  --color-orange: var(--orange);
+  --color-yellow: var(--yellow);
+  --color-green: var(--green);
+  --color-indigo: var(--indigo);
+  --color-gray: var(--gray);
+  --color-bar: var(--bar);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", system-ui, Roboto, "Segoe UI", sans-serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   background: var(--bg);
-  color: var(--text);
+  color: var(--label);
   font-family: var(--font-sans);
+  font-size: 17px;
+  letter-spacing: -0.01em;
   min-height: 100dvh;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
 }
 
-h1,
-h2 {
-  font-family: var(--font-bricolage), var(--font-geist-sans), sans-serif;
-  letter-spacing: -0.02em;
+/* Hairline separators like UIKit (0.5px on retina screens). */
+.hairline-b {
+  box-shadow: inset 0 -0.5px 0 var(--sep);
+}
+.hairline-t {
+  box-shadow: inset 0 0.5px 0 var(--sep);
 }
 
-/* Hide the scrollbar on horizontal chip rows. */
 .no-scrollbar {
   scrollbar-width: none;
 }
@@ -78,58 +96,29 @@ h2 {
   display: none;
 }
 
-/* Gentle entrance for lists, so new content doesn't just pop in. */
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
+/* iOS-style date/time pickers: grey capsule with the value. */
+.ios-picker {
+  position: relative;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--fill);
+  color: var(--label);
+  border-radius: 7px;
+  padding: 6px 10px;
+  font-size: 17px;
+  min-height: 34px;
+  font-family: inherit;
 }
-.rise {
-  animation: rise 0.22s ease-out both;
-}
-@media (prefers-reduced-motion: reduce) {
-  .rise {
-    animation: none;
-  }
-}
-
-/* Subject colours: a card sets --sub, these derive tints that work in both themes. */
-.sub-tile {
-  background: color-mix(in oklab, var(--sub) 16%, var(--surface));
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--sub) 22%, transparent);
-}
-.sub-text {
-  color: color-mix(in oklab, var(--sub) 82%, var(--text));
-}
-.sub-solid {
-  background: var(--sub);
-}
-.sub-glow {
-  box-shadow: 0 10px 28px -16px var(--sub);
-}
-.sub-hero {
-  background:
-    radial-gradient(120% 90% at 100% 0%, color-mix(in oklab, var(--sub) 55%, white) 0%, transparent 55%),
-    linear-gradient(135deg, var(--sub) 0%, color-mix(in oklab, var(--sub) 70%, black) 100%);
+.ios-picker::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
 }
 
-/* Soft colourful mesh behind everything. */
-body::before {
-  content: "";
-  position: fixed;
-  inset: -20vh -20vw auto;
-  height: 70vh;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(40% 50% at 15% 30%, rgb(255 107 61 / 0.22), transparent 70%),
-    radial-gradient(35% 45% at 70% 20%, rgb(124 92 255 / 0.2), transparent 70%),
-    radial-gradient(30% 40% at 95% 55%, rgb(6 182 212 / 0.16), transparent 70%);
-  filter: blur(20px);
-}
-@media (prefers-color-scheme: dark) {
-  body::before {
-    opacity: 0.7;
-  }
+/* Inset separators between rows of a grouped list (none after the last row). */
+.ios-group > *:not(:last-child) .row-sep {
+  box-shadow: inset 0 -0.5px 0 var(--sep);
 }

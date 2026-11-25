@@ -3,22 +3,24 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { animate, motion, useMotionValue, useTransform } from "motion/react";
+import { Spinner } from "@/components/ios/spinner";
 import { tap } from "@/lib/haptics";
 
-const THRESHOLD = 72;
+const THRESHOLD = 70;
 
 /**
- * Pull down at the top of the page to refresh. Installed iPhone web apps have no
- * built-in pull-to-refresh, so this gives everyone the same gesture.
+ * UIRefreshControl: pull down at the top to refresh. Installed iPhone web apps
+ * don't get this from the browser, so it's done here.
  */
 export function PullToRefresh({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [refreshing, start] = useTransition();
-  const [armed, setArmed] = useState(false);
   const y = useMotionValue(0);
-  const rotate = useTransform(y, [0, THRESHOLD], [0, 270]);
-  const opacity = useTransform(y, [0, 24, THRESHOLD], [0, 0.6, 1]);
+  const opacity = useTransform(y, [10, THRESHOLD], [0, 1]);
+  const scale = useTransform(y, [10, THRESHOLD], [0.6, 1]);
   const startY = useRef<number | null>(null);
+  const armed = useRef(false);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     const onStart = (e: TouchEvent) => {
@@ -28,24 +30,24 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
       if (startY.current === null) return;
       const dy = e.touches[0].clientY - startY.current;
       if (dy <= 0) return y.set(0);
-      const pulled = Math.min(THRESHOLD * 1.4, dy * 0.5);
+      const pulled = Math.min(THRESHOLD * 1.5, dy * 0.45);
       y.set(pulled);
-      const nowArmed = pulled >= THRESHOLD;
-      setArmed((was) => {
-        if (nowArmed && !was) tap(10);
-        return nowArmed;
-      });
+      if (pulled >= THRESHOLD && !armed.current) {
+        armed.current = true;
+        tap(10);
+      } else if (pulled < THRESHOLD) armed.current = false;
     };
     const onEnd = () => {
       if (startY.current === null) return;
       startY.current = null;
-      if (y.get() >= THRESHOLD) {
-        animate(y, 48, { type: "spring", stiffness: 400, damping: 30 });
+      if (armed.current) {
+        armed.current = false;
+        setBusy(true);
+        animate(y, 52, { type: "spring", stiffness: 400, damping: 34 });
         start(() => router.refresh());
       } else {
-        animate(y, 0, { type: "spring", stiffness: 400, damping: 30 });
+        animate(y, 0, { type: "spring", stiffness: 400, damping: 34 });
       }
-      setArmed(false);
     };
     window.addEventListener("touchstart", onStart, { passive: true });
     window.addEventListener("touchmove", onMove, { passive: true });
@@ -58,27 +60,18 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
   }, [router, y]);
 
   useEffect(() => {
-    if (!refreshing) animate(y, 0, { type: "spring", stiffness: 400, damping: 30 });
-  }, [refreshing, y]);
+    if (!refreshing && busy) {
+      setBusy(false);
+      animate(y, 0, { type: "spring", stiffness: 400, damping: 34 });
+    }
+  }, [refreshing, busy, y]);
 
   return (
     <>
-      <motion.div style={{ height: y }} className="flex items-end justify-center overflow-hidden">
-        <motion.svg
-          style={{ rotate: refreshing ? undefined : rotate, opacity }}
-          animate={refreshing ? { rotate: 360 } : undefined}
-          transition={refreshing ? { repeat: Infinity, duration: 0.8, ease: "linear" } : undefined}
-          width="22"
-          height="22"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke={armed || refreshing ? "var(--accent)" : "var(--muted)"}
-          strokeWidth="2.4"
-          strokeLinecap="round"
-          className="mb-3"
-        >
-          <path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5" />
-        </motion.svg>
+      <motion.div style={{ height: y }} className="flex items-center justify-center overflow-hidden">
+        <motion.span style={{ opacity, scale }} className="text-label-2">
+          <Spinner size={22} className={busy ? "" : "[animation-play-state:paused]"} />
+        </motion.span>
       </motion.div>
       {children}
     </>

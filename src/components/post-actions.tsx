@@ -1,34 +1,20 @@
 "use client";
 
-import Link from "next/link";
-import { createContext, useContext, useRef, useState, useTransition } from "react";
-import { AnimatePresence, animate, motion, useMotionValue, useTransform } from "motion/react";
+import { useState, useTransition } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
 import { approvePost, deletePost, rejectPost } from "@/app/(app)/actions";
-import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
-import { Button } from "@/components/ui/button";
-import { success, tap } from "@/lib/haptics";
+import { PromptAlert } from "@/components/ios/alert";
+import { SwipeRow } from "@/components/ios/swipe-row";
+import { PostRow } from "@/components/post-row";
+import { success } from "@/lib/haptics";
+import type { Post } from "@/lib/types";
 
-type Ctx = {
-  run: (fn: () => Promise<void>, opts: { done: string; exitX?: number }) => void;
-  pending: boolean;
-  rejecting: boolean;
-  setRejecting: (v: boolean) => void;
-};
-const RemovableCtx = createContext<Ctx>({ run: () => {}, pending: false, rejecting: false, setRejecting: () => {} });
-
-/**
- * Wraps a card so actions remove it instantly (optimistic) with a collapse animation.
- * If the server call fails, the card comes back and an error toast shows.
- */
-export function Removable({ children, swipe = false }: { children: React.ReactNode; swipe?: boolean }) {
+/** Removes a row the moment an action starts (optimistic); brings it back if the server says no. */
+function useRemovable() {
   const [gone, setGone] = useState(false);
-  const [exitX, setExitX] = useState(0);
-  const [rejecting, setRejecting] = useState(false);
-  const [pending, start] = useTransition();
-
-  const run: Ctx["run"] = (fn, { done, exitX = 0 }) => {
-    setExitX(exitX);
+  const [, start] = useTransition();
+  const run = (fn: () => Promise<void>, done: string) => {
     setGone(true);
     start(async () => {
       try {
@@ -41,159 +27,107 @@ export function Removable({ children, swipe = false }: { children: React.ReactNo
       }
     });
   };
+  return { gone, run };
+}
 
+function Collapse({ gone, children }: { gone: boolean; children: React.ReactNode }) {
   return (
-    <RemovableCtx.Provider value={{ run, pending, rejecting, setRejecting }}>
-      <AnimatePresence initial={false}>
-        {!gone && (
-          <motion.div
-            exit={{ opacity: 0, height: 0, x: exitX, marginBottom: 0, transition: { duration: 0.28, ease: [0.4, 0, 0.2, 1] } }}
-            style={{ overflow: "visible" }}
-          >
-            {swipe ? <Swipe>{children}</Swipe> : children}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </RemovableCtx.Provider>
+    <AnimatePresence initial={false}>
+      {!gone && (
+        <motion.div exit={{ height: 0, opacity: 0, transition: { duration: 0.25, ease: [0.4, 0, 0.2, 1] } }} className="overflow-hidden">
+          {children}
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
-/** Swipe right to approve, left to reject (opens the reason box). */
-function Swipe({ children }: { children: React.ReactNode }) {
-  const { run, setRejecting } = useContext(RemovableCtx);
-  const id = useContext(SwipeIdCtx);
-  const x = useMotionValue(0);
-  const dragged = useRef(false);
-  const approveOpacity = useTransform(x, [20, 110], [0, 1]);
-  const rejectOpacity = useTransform(x, [-110, -20], [1, 0]);
-  const approveScale = useTransform(x, [20, 110], [0.6, 1]);
-  const rejectScale = useTransform(x, [-110, -20], [1, 0.6]);
+/** Feed row. Admins can swipe left to edit. */
+export function FeedRow({ post, isAdmin, muted }: { post: Post; isAdmin: boolean; muted?: boolean }) {
+  const row = <PostRow post={post} muted={muted} />;
+  if (!isAdmin) return row;
+  return <SwipeRow trailing={[{ label: "Edit", color: "var(--gray)", href: `/posts/${post.id}/edit` }]}>{row}</SwipeRow>;
+}
+
+/** Approval queue row: swipe right to approve, left to reject, or use the buttons. */
+export function QueueRow({ post }: { post: Post }) {
+  const { gone, run } = useRemovable();
+  const [rejecting, setRejecting] = useState(false);
+  const approve = () => run(() => approvePost(post.id), "Approved. Everyone's being notified.");
 
   return (
-    <div className="relative">
-      <div className="absolute inset-0 flex items-center justify-between overflow-hidden rounded-[22px] px-6">
-        <motion.div style={{ opacity: approveOpacity, scale: approveScale }} className="flex items-center gap-2 font-semibold text-ok">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7" /></svg>
-          Approve
-        </motion.div>
-        <motion.div style={{ opacity: rejectOpacity, scale: rejectScale }} className="flex items-center gap-2 font-semibold text-accent">
-          Reject
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-        </motion.div>
-      </div>
-      <motion.div
-        drag="x"
-        dragDirectionLock
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.6}
-        style={{ x, touchAction: "pan-y" }}
-        onPointerDown={() => (dragged.current = false)}
-        onDragStart={() => (dragged.current = true)}
-        onClickCapture={(e) => {
-          // A swipe shouldn't also count as tapping the card's link.
-          if (dragged.current) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-        }}
-        onDragEnd={(_, info) => {
-          if (info.offset.x > 110 && id) {
-            run(() => approvePost(id), { done: "Approved. Everyone's being notified.", exitX: 400 });
-          } else if (info.offset.x < -110) {
-            tap(12);
-            setRejecting(true);
-            animate(x, 0, { type: "spring", stiffness: 500, damping: 35 });
-          }
-        }}
-        className="relative"
+    <Collapse gone={gone}>
+      <SwipeRow
+        leading={{ label: "Approve", color: "var(--green)", onAction: approve, full: true }}
+        trailing={[
+          { label: "Edit", color: "var(--gray)", href: `/posts/${post.id}/edit?back=/admin` },
+          { label: "Reject", color: "var(--red)", onAction: () => setRejecting(true) },
+        ]}
       >
-        {children}
-      </motion.div>
-    </div>
-  );
-}
-
-const SwipeIdCtx = createContext<string | null>(null);
-/** Lets the swipe gesture know which post it belongs to. */
-export function SwipeId({ id, children }: { id: string; children: React.ReactNode }) {
-  return <SwipeIdCtx.Provider value={id}>{children}</SwipeIdCtx.Provider>;
-}
-
-export function AdminActions({ id }: { id: string }) {
-  const { run, pending, rejecting, setRejecting } = useContext(RemovableCtx);
-  const [reason, setReason] = useState("");
-
-  return (
-    <AutoHeight deps={[rejecting]} className="mt-3 border-t border-line">
-      <AnimatePresence mode="popLayout" initial={false}>
-        {rejecting ? (
-          <motion.form
-            key="reject"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            onSubmit={(e) => {
-              e.preventDefault();
-              run(() => rejectPost(id, reason), { done: "Rejected. The poster will be told why.", exitX: -400 });
-            }}
-            className="flex flex-col gap-2 pt-3"
-          >
-            <input
-              autoFocus
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              maxLength={300}
-              placeholder="Reason (the poster will see this)"
-              className="rounded-xl border border-line bg-bg px-3 py-2.5 text-base outline-none transition-colors focus:border-accent"
-            />
-            <div className="flex gap-2">
-              <Button type="submit" disabled={pending} className="flex-1">Reject</Button>
-              <Button type="button" variant="soft" onClick={() => setRejecting(false)} className="flex-1">Cancel</Button>
+        <PostRow
+          post={post}
+          extra={
+            <div className="mt-2.5 mb-0.5 flex gap-2">
+              <button
+                type="button"
+                onClick={approve}
+                className="rounded-full bg-tint px-4 py-[5px] text-[15px] font-semibold text-white transition-opacity active:opacity-60"
+              >
+                Approve
+              </button>
+              <button
+                type="button"
+                onClick={() => setRejecting(true)}
+                className="rounded-full bg-fill px-4 py-[5px] text-[15px] font-semibold text-tint transition-opacity active:opacity-60"
+              >
+                Reject
+              </button>
             </div>
-          </motion.form>
-        ) : (
-          <motion.div
-            key="actions"
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 6 }}
-            className="flex gap-2 pt-3"
-          >
-            <Button variant="success" disabled={pending} onClick={() => run(() => approvePost(id), { done: "Approved. Everyone's being notified.", exitX: 400 })} className="flex-1">
-              Approve
-            </Button>
-            <Link href={`/posts/${id}/edit?back=/admin`} className="rounded-xl bg-surface-2 px-3.5 py-2.5 text-sm font-semibold transition active:scale-95">
-              Edit
-            </Link>
-            <Button variant="soft" disabled={pending} onClick={() => setRejecting(true)}>
-              Reject
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </AutoHeight>
+          }
+        />
+      </SwipeRow>
+      <PromptAlert
+        open={rejecting}
+        title="Reject Post?"
+        message={`“${post.title}” won't be shown. ${post.author_name ?? "The poster"} will see your reason.`}
+        placeholder="Reason (optional)"
+        confirmLabel="Reject"
+        destructive
+        onCancel={() => setRejecting(false)}
+        onConfirm={(reason) => {
+          setRejecting(false);
+          run(() => rejectPost(post.id, reason), "Rejected");
+        }}
+      />
+    </Collapse>
   );
 }
 
-export function DeleteButton({ id, label = "Delete" }: { id: string; label?: string }) {
-  const { run, pending } = useContext(RemovableCtx);
-  const [confirming, setConfirming] = useState(false);
-  return confirming ? (
-    <div className="flex flex-1 gap-2">
-      <Button
-        disabled={pending}
-        onClick={() => run(() => deletePost(id), { done: label === "Withdraw" ? "Withdrawn" : "Deleted" })}
-        className="flex-1"
-      >
-        Yes, {label.toLowerCase()}
-      </Button>
-      <Button variant="soft" onClick={() => setConfirming(false)}>
-        No
-      </Button>
-    </div>
-  ) : (
-    <Button variant="soft" onClick={() => setConfirming(true)} className="flex-1 text-muted">
-      {label}
-    </Button>
+/** "My posts" row: swipe left to edit (while pending) or withdraw/delete. */
+export function MineRow({ post }: { post: Post }) {
+  const { gone, run } = useRemovable();
+  const actions =
+    post.status === "approved"
+      ? []
+      : [
+          ...(post.status === "pending" ? [{ label: "Edit", color: "var(--gray)", href: `/posts/${post.id}/edit?back=/mine` }] : []),
+          {
+            label: post.status === "pending" ? "Withdraw" : "Delete",
+            color: "var(--red)",
+            onAction: () => run(() => deletePost(post.id), post.status === "pending" ? "Withdrawn" : "Deleted"),
+          },
+        ];
+
+  return (
+    <Collapse gone={gone}>
+      <SwipeRow trailing={actions}>
+        <PostRow
+          post={post}
+          showAuthor={false}
+          muted={post.status === "rejected"}
+          extra={post.status === "rejected" && post.reject_reason ? <p className="mt-1 text-[15px] leading-5 text-red">Reason: {post.reject_reason}</p> : null}
+        />
+      </SwipeRow>
+    </Collapse>
   );
 }

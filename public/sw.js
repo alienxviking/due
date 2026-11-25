@@ -13,8 +13,8 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(data.title || "Due", {
       body: data.body || "",
       tag: data.tag,
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
+      icon: "/icons/due-192.png",
+      badge: "/icons/due-192.png",
       data: { url: data.url || "/" },
     }),
   );

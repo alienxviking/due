@@ -3,30 +3,20 @@
 import { useEffect, useState } from "react";
 import { timeLeft } from "@/lib/time";
 
-const TONES = {
-  urgent: "bg-accent-soft text-accent",
-  soon: "bg-warn-soft text-warn",
-  calm: "bg-surface-2 text-muted",
-  past: "bg-surface-2 text-muted",
-} as const;
+const TONES = { urgent: "text-red", soon: "text-orange", calm: "text-label-2", past: "text-label-3" } as const;
 
-/** "2d 4h left" chip. Server renders it with its clock; the client takes over and ticks. */
-export function Countdown({ deadline }: { deadline: string }) {
+/** "4h 59m" in the row's trailing slot: red under 24h, orange under 3 days. Ticks every 30s. */
+export function Countdown({ deadline, className = "" }: { deadline: string; className?: string }) {
   const [now, setNow] = useState(() => Date.now());
-
   useEffect(() => {
     setNow(Date.now());
     const t = setInterval(() => setNow(Date.now()), 30_000);
     return () => clearInterval(t);
   }, []);
-
   const { label, tone } = timeLeft(deadline, now);
   return (
-    <span
-      suppressHydrationWarning
-      className={`inline-flex h-6 shrink-0 items-center rounded-full px-2.5 text-xs font-semibold tabular-nums ${TONES[tone]}`}
-    >
-      {label}
+    <span suppressHydrationWarning className={`tabular-nums ${TONES[tone]} ${className}`}>
+      {label.replace(" left", "")}
     </span>
   );
 }
