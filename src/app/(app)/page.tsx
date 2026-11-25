@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NotificationBanner } from "@/components/notifications";
 import { Empty, FeedTabs, PageHeader } from "@/components/page-header";
 import { PostCard } from "@/components/post-card";
 import { getMe } from "@/lib/me";
@@ -21,6 +22,7 @@ export default async function Home() {
   return (
     <>
       <PageHeader title="Due" subtitle={`Hi ${profile.name?.split(" ")[0] ?? "there"}`} />
+      <NotificationBanner />
       <FeedTabs active="upcoming" />
       {posts.length === 0 ? (
         <Empty>

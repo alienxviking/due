@@ -1,3 +1,4 @@
+import { NotificationSettings } from "@/components/notifications";
 import { PageHeader } from "@/components/page-header";
 import { getMe } from "@/lib/me";
 
@@ -16,6 +17,10 @@ export default async function Settings() {
           {isAdmin && " · Admin"}
         </p>
       </section>
+
+      <div className="mt-4">
+        <NotificationSettings />
+      </div>
 
       <form action="/auth/signout" method="post" className="mt-6">
         <button className="w-full rounded-xl border border-line px-4 py-3 font-medium text-muted">Sign out</button>
