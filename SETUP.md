@@ -51,13 +51,13 @@ Open http://localhost:3000 and sign in with your college account. Your profile b
 2. Add every variable from `.env.local` as an Environment Variable. Set `VAPID_SUBJECT` to your app URL, e.g. `https://due-xyz.vercel.app`.
 3. Deploy.
 4. Supabase **Authentication → URL Configuration**:
-   - **Site URL:** `https://<your-app>.vercel.app`
-   - **Redirect URLs:** add `https://<your-app>.vercel.app/auth/callback`
+   - **Site URL:** `https://due-sst.vercel.app`
+   - **Redirect URLs:** add `https://due-sst.vercel.app/auth/callback`
 5. Supabase **SQL Editor**: point the notification jobs at the app (use the same `DISPATCH_SECRET` as Vercel):
 
    ```sql
    insert into private.config (key, value) values
-     ('dispatch_url', 'https://<your-app>.vercel.app/api/dispatch'),
+     ('dispatch_url', 'https://due-sst.vercel.app/api/dispatch'),
      ('dispatch_secret', '<DISPATCH_SECRET>')
    on conflict (key) do update set value = excluded.value;
    ```
