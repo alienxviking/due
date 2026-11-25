@@ -8,6 +8,7 @@ import { approvePost, deletePost, rejectPost } from "@/app/(app)/actions";
 import { DeadlineCard } from "@/components/deadline-card";
 import { GhostButton, GlowButton } from "@/components/glass/buttons";
 import { PromptAlert } from "@/components/ios/alert";
+import { HoldToConfirmButton } from "@/components/spectrumui/hold-to-confirm";
 import { success } from "@/lib/haptics";
 import type { Post } from "@/lib/types";
 
@@ -95,7 +96,6 @@ const STATUS = {
 /** "My posts" card: status, reason, and Edit / Withdraw. */
 export function MineCard({ post }: { post: Post }) {
   const { gone, run } = useRemovable();
-  const [confirming, setConfirming] = useState(false);
   const s = STATUS[post.status];
   const verb = post.status === "pending" ? "Withdraw" : "Delete";
 
@@ -126,18 +126,15 @@ export function MineCard({ post }: { post: Post }) {
                     Edit
                   </Link>
                 )}
-                {confirming ? (
-                  <>
-                    <GhostButton tone="danger" className="flex-1" onClick={() => run(() => deletePost(post.id), post.status === "pending" ? "Withdrawn" : "Deleted")}>
-                      Yes, {verb.toLowerCase()}
-                    </GhostButton>
-                    <GhostButton onClick={() => setConfirming(false)}>No</GhostButton>
-                  </>
-                ) : (
-                  <GhostButton tone="danger" className="flex-1" onClick={() => setConfirming(true)}>
-                    {verb}
-                  </GhostButton>
-                )}
+                {/* Spectrum UI hold-to-confirm: press and hold, so it can't happen by accident. */}
+                <HoldToConfirmButton
+                  size="lg"
+                  label={`Hold to ${verb.toLowerCase()}`}
+                  confirmedLabel={post.status === "pending" ? "Withdrawn" : "Deleted"}
+                  resetDelay={0}
+                  className="flex-1 justify-center rounded-full"
+                  onConfirm={() => run(() => deletePost(post.id), post.status === "pending" ? "Withdrawn" : "Deleted")}
+                />
               </div>
             </div>
           )

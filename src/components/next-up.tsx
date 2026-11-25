@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SlidingNumber } from "@/components/animate-ui/primitives/texts/sliding-number";
+import { Beam } from "@/components/glass/beam";
 import { GlassCard } from "@/components/glass/glass-card";
 import { Meteors } from "@/components/ui/meteors";
 import type { Subject } from "@/lib/subject";
@@ -21,16 +22,20 @@ function Unit({ value, label }: { value: number; label: string }) {
 }
 
 /** The soonest deadline as a hero tile: meteors, glowing border, live countdown. */
-export function NextUp({ title, url, deadline, when, subject }: { title: string; url: string; deadline: string; when: string; subject: Subject }) {
-  const [now, setNow] = useState(() => Date.now());
+export function NextUp({ title, url, deadline, when, subject, initialNow }: { title: string; url: string; deadline: string; when: string; subject: Subject; initialNow: number }) {
+  // Start from the server's timestamp so server and browser render identical digits.
+  const [now, setNow] = useState(initialNow);
   useEffect(() => {
+    setNow(Date.now());
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  const { d, h, m, s } = parts(new Date(deadline).getTime() - now);
+  const left = new Date(deadline).getTime() - now;
+  const { d, h, m, s } = parts(left);
 
   return (
-    <GlassCard className="h-full">
+    <Beam size="md" color={left < 24 * 3600e3 ? "sunset" : "ocean"} duration={4} className="h-full">
+    <GlassCard className="h-full" glow={false}>
       <a href={url} target="_blank" rel="noopener noreferrer" className="relative flex h-full flex-col justify-between gap-8 p-6 md:p-8">
         <Meteors number={14} />
         <div
@@ -57,5 +62,6 @@ export function NextUp({ title, url, deadline, when, subject }: { title: string;
         </div>
       </a>
     </GlassCard>
+    </Beam>
   );
 }

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { PageHead } from "@/components/glass/page-head";
 import { QueueCard } from "@/components/post-actions";
+import { InboxEmpty } from "@/components/spectrumui/blocks/empty-states/inbox-empty";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { getMe, getSession } from "@/lib/me";
 import type { Post } from "@/lib/types";
@@ -23,7 +24,17 @@ export default async function AdminQueue() {
         subtitle={posts.length ? `${posts.length} waiting for your approval. Approved posts notify everyone.` : "All caught up. New submissions land here."}
       />
       {posts.length === 0 ? (
-        <div className="flex min-h-56 items-center justify-center rounded-[22px] border border-dashed border-white/10 text-sm text-neutral-500">Nothing to review ☕</div>
+        <div className="mx-auto max-w-xl">
+          <InboxEmpty
+            panelTitle="Approval queue"
+            title="All caught up"
+            description="Nothing is waiting for approval. When someone submits a deadline, it lands here and you get a notification."
+            stats={[{ label: "Waiting", value: "0" }]}
+            variant="Cleared"
+            archiveLabel="Back to deadlines"
+            archiveHref="/"
+          />
+        </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-3">
           {posts.map((p) => (

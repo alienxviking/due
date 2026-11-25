@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { Beam } from "@/components/glass/beam";
 import { GlassCard } from "@/components/glass/glass-card";
 import type { Post } from "@/lib/types";
 import { subjectOf } from "@/lib/subject";
-import { formatDeadline } from "@/lib/time";
+import { formatDeadline, timeLeft } from "@/lib/time";
 import { Countdown } from "./countdown";
 
 function host(url: string) {
@@ -16,7 +17,8 @@ function host(url: string) {
 /** One deadline as a glass card. The whole card opens the link; `footer` holds actions. */
 export function DeadlineCard({ post, editHref, footer, muted, showAuthor = true }: { post: Post; editHref?: string; footer?: React.ReactNode; muted?: boolean; showAuthor?: boolean }) {
   const s = subjectOf(post.title, post.note);
-  return (
+  const urgent = !muted && !!post.deadline && timeLeft(post.deadline).tone === "urgent";
+  const card = (
     <GlassCard className={muted ? "opacity-60" : ""} glow={!muted}>
       <div className="relative flex h-full flex-col p-5">
         <div className="flex items-center justify-between gap-3">
@@ -57,6 +59,14 @@ export function DeadlineCard({ post, editHref, footer, muted, showAuthor = true 
         {footer && <div className="relative z-10 mt-4">{footer}</div>}
       </div>
     </GlassCard>
+  );
+  // Due within 24 hours: a sunset-coloured beam pulses around the card.
+  return urgent ? (
+    <Beam size="pulse-outside" color="sunset" className="h-full">
+      {card}
+    </Beam>
+  ) : (
+    card
   );
 }
 

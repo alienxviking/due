@@ -68,7 +68,7 @@ export function HomeView({ posts, isAdmin, now }: { posts: Post[]; isAdmin: bool
       <div className="grid gap-3 md:grid-cols-3 md:gap-4">
         <div className="md:col-span-2 md:row-span-2">
           {next ? (
-            <NextUp title={next.title} url={next.url} deadline={next.deadline!} when={formatDeadline(next.deadline)} subject={subjectOf(next.title, next.note)} />
+            <NextUp title={next.title} url={next.url} deadline={next.deadline!} when={formatDeadline(next.deadline)} subject={subjectOf(next.title, next.note)} initialNow={now} />
           ) : (
             <div className="flex h-full min-h-56 flex-col items-center justify-center rounded-[22px] border border-dashed border-white/10 p-8 text-center">
               <p className="text-chrome text-2xl font-bold">You&apos;re all clear.</p>
