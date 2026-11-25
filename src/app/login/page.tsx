@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Rise, Stagger } from "@/components/motion/stagger";
 import { GoogleButton } from "./google-button";
 
 export const metadata = { title: "Sign in · Due" };
@@ -15,21 +16,21 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-between px-6 py-10">
       <div />
       <div className="flex flex-col gap-8">
-        <div className="flex flex-col items-start gap-4">
+        <Rise className="flex flex-col items-start gap-4">
           <Image src="/icons/icon-192.png" alt="" width={64} height={64} className="rounded-2xl shadow-lg" priority />
           <div>
-            <h1 className="text-4xl font-bold tracking-tight">Due</h1>
+            <h1 className="text-5xl font-bold">Due</h1>
             <p className="mt-1 text-lg text-muted">Never miss a deadline again.</p>
           </div>
-        </div>
-        <ul className="flex flex-col gap-3">
+        </Rise>
+        <Stagger className="flex flex-col gap-3" delay={0.15}>
           {points.map(([icon, text]) => (
-            <li key={text} className="flex items-center gap-3 text-[15px]">
+            <div key={text} className="flex items-center gap-3 text-[15px]">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-surface-2">{icon}</span>
               {text}
-            </li>
+            </div>
           ))}
-        </ul>
+        </Stagger>
       </div>
       <div className="flex flex-col gap-3 pt-10">
         {error && (

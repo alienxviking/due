@@ -1,11 +1,11 @@
-import Link from "next/link";
+import { Segmented } from "@/components/motion/segmented";
 
-export function PageHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode }) {
+export function PageHeader({ title, subtitle, right }: { title: React.ReactNode; subtitle?: React.ReactNode; right?: React.ReactNode }) {
   return (
-    <header className="mb-5 flex items-end justify-between gap-3 pt-2">
-      <div>
-        <h1 className="text-[28px] font-bold leading-tight tracking-tight">{title}</h1>
-        {subtitle && <p className="mt-0.5 text-sm text-muted">{subtitle}</p>}
+    <header className="mb-5 flex items-end justify-between gap-3 pt-3">
+      <div className="min-w-0">
+        <h1 className="text-[32px] font-bold leading-[1.05]">{title}</h1>
+        {subtitle && <div className="mt-1.5 text-[15px] text-muted">{subtitle}</div>}
       </div>
       {right}
     </header>
@@ -13,36 +13,35 @@ export function PageHeader({ title, subtitle, right }: { title: string; subtitle
 }
 
 export function FeedTabs({ active }: { active: "upcoming" | "past" }) {
-  const tab = (href: string, label: string, on: boolean) => (
-    <Link
-      href={href}
-      className={`flex-1 rounded-[10px] py-2 text-center text-sm font-semibold transition-colors ${on ? "bg-surface text-text shadow-card" : "text-muted"}`}
-    >
-      {label}
-    </Link>
-  );
   return (
-    <div className="mb-5 flex gap-1 rounded-xl bg-surface-2 p-1">
-      {tab("/", "Upcoming", active === "upcoming")}
-      {tab("/past", "Past", active === "past")}
-    </div>
+    <Segmented
+      className="mb-6"
+      value={active}
+      options={[
+        { value: "upcoming", label: "Upcoming", href: "/" },
+        { value: "past", label: "Past", href: "/past" },
+      ]}
+    />
   );
 }
 
-export function SectionLabel({ children, count }: { children: React.ReactNode; count?: number }) {
+const DOT = { Today: "bg-accent", Tomorrow: "bg-accent/60", "This week": "bg-warn", Later: "bg-muted/50", "Date TBA": "bg-muted/30" } as Record<string, string>;
+
+export function SectionLabel({ children, count }: { children: string; count?: number }) {
   return (
-    <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted">
+    <h3 className="mb-2.5 flex items-center gap-2 px-1 text-[13px] font-semibold text-muted">
+      <span className={`size-1.5 rounded-full ${DOT[children] ?? "bg-muted/40"}`} />
       {children}
-      {count !== undefined && <span className="rounded-full bg-surface-2 px-1.5 py-px text-[10px] tabular-nums">{count}</span>}
+      {count !== undefined && <span className="tabular-nums text-muted/60">{count}</span>}
     </h3>
   );
 }
 
 export function Empty({ icon = "✓", title, children }: { icon?: string; title: string; children?: React.ReactNode }) {
   return (
-    <div className="rise flex flex-col items-center rounded-2xl border border-dashed border-line px-6 py-12 text-center">
-      <span className="mb-3 flex size-12 items-center justify-center rounded-full bg-surface-2 text-xl">{icon}</span>
-      <p className="font-semibold">{title}</p>
+    <div className="flex flex-col items-center rounded-[28px] border border-dashed border-line px-6 py-14 text-center">
+      <span className="mb-4 flex size-16 items-center justify-center rounded-[22px] bg-surface-2 text-3xl">{icon}</span>
+      <p className="font-display text-lg font-bold">{title}</p>
       {children && <div className="mt-1 text-sm text-muted">{children}</div>}
     </div>
   );

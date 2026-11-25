@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { motion } from "motion/react";
+import { toast } from "sonner";
 import { sendTestPush } from "@/app/(app)/push-actions";
+import { Switch } from "@/components/animate-ui/components/radix/switch";
+import { Button } from "@/components/ui/button";
 
 type Status = "loading" | "ios-install" | "unsupported" | "denied" | "off" | "on";
 
@@ -131,71 +135,73 @@ function InstallButton() {
   }, []);
   if (!can) return null;
   return (
-    <button
+    <Button
+      variant="soft"
       onClick={async () => {
         await window.__installPrompt?.prompt();
         window.__installPrompt = undefined;
         setCan(false);
       }}
-      className="w-full rounded-xl bg-surface-2 px-4 py-3 font-semibold"
     >
       Install Due as an app
-    </button>
+    </Button>
   );
 }
-
-const primary = "rounded-xl bg-accent px-4 py-3 font-semibold text-white transition active:scale-[0.98] disabled:opacity-60";
 
 /** Full controls, for the Settings page. */
 export function NotificationSettings() {
   const { status, busy, error, enable, disable } = usePush();
-  const [testMsg, setTestMsg] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
+  const toggleable = status === "on" || status === "off";
 
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 shadow-card">
-      <div>
-        <h2 className="font-semibold">Notifications</h2>
-        <p className="text-sm text-muted">New deadlines, plus reminders 24 hours and 2 hours before.</p>
+    <section className="flex flex-col gap-3 rounded-[22px] border border-line bg-surface p-4 shadow-card">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-accent-soft text-accent">
+            <motion.svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              animate={status === "on" ? { rotate: [0, -16, 14, -10, 8, 0] } : { rotate: 0 }} transition={{ duration: 0.7 }} style={{ originY: "4px" }}>
+              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+            </motion.svg>
+          </span>
+          <div>
+            <h2 className="font-semibold">Notifications</h2>
+            <p className="text-[13px] text-muted">{status === "on" ? "On for this device" : "New deadlines + reminders"}</p>
+          </div>
+        </div>
+        {toggleable && (
+          <Switch checked={status === "on"} disabled={busy} onCheckedChange={(v) => (v ? enable() : disable())} aria-label="Notifications" />
+        )}
       </div>
 
       {status === "loading" && <p className="text-sm text-muted">Checking…</p>}
       {status === "ios-install" && (
-        <div className="rounded-xl bg-surface-2 p-3">
+        <div className="rounded-2xl bg-surface-2 p-3.5">
           <p className="text-sm font-medium">On iPhone, notifications only work once Due is on your home screen.</p>
           <IOSSteps />
         </div>
       )}
       {status === "unsupported" && <p className="text-sm text-muted">This browser can&apos;t receive notifications. Try Chrome on Android or Safari on iPhone.</p>}
       {status === "denied" && (
-        <p className="text-sm text-muted">
+        <p className="rounded-2xl bg-surface-2 p-3.5 text-sm text-muted">
           Notifications are blocked for Due. Allow them in your phone&apos;s settings (or the browser&apos;s site settings), then come back.
         </p>
       )}
-      {status === "off" && (
-        <button onClick={enable} disabled={busy} className={primary}>
-          {busy ? "Turning on…" : "Turn on notifications"}
-        </button>
-      )}
       {status === "on" && (
-        <div className="flex flex-col gap-2">
-          <p className="text-sm text-ok">On for this device.</p>
-          <div className="flex gap-2">
-            <button
-              onClick={async () => {
-                setTestMsg("Sending…");
-                const n = await sendTestPush();
-                setTestMsg(n > 0 ? "Sent. It should arrive in a few seconds." : "No devices found. Try turning notifications off and on.");
-              }}
-              className="flex-1 rounded-xl bg-surface-2 px-4 py-2.5 text-sm font-semibold"
-            >
-              Send a test
-            </button>
-            <button onClick={disable} disabled={busy} className="flex-1 rounded-xl bg-surface-2 px-4 py-2.5 text-sm font-semibold text-muted">
-              Turn off
-            </button>
-          </div>
-          {testMsg && <p className="text-sm text-muted">{testMsg}</p>}
-        </div>
+        <Button
+          variant="soft"
+          loading={testing}
+          loadingText="Sending…"
+          onClick={async () => {
+            setTesting(true);
+            const n = await sendTestPush().catch(() => 0);
+            setTesting(false);
+            if (n > 0) toast.success("Test sent. It should arrive in a few seconds.");
+            else toast.error("No devices found. Turn notifications off and on again.");
+          }}
+        >
+          Send a test notification
+        </Button>
       )}
       {error && <p className="text-sm text-accent">{error}</p>}
       <InstallButton />
@@ -225,21 +231,32 @@ export function NotificationBanner() {
   };
 
   return (
-    <div className="rise mb-5 rounded-2xl border border-line bg-surface p-4 shadow-card">
+    <motion.div
+      initial={{ opacity: 0, y: -8, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: "spring", stiffness: 300, damping: 26, delay: 0.25 }}
+      className="mb-5 rounded-[22px] border border-line bg-surface p-4 shadow-card"
+    >
       <div className="flex items-start justify-between gap-3">
-        <p className="font-medium">{status === "ios-install" ? "Add Due to your home screen" : "Get reminders before things are due"}</p>
-        <button onClick={dismiss} aria-label="Dismiss" className="-mt-1 -mr-1 px-1 text-lg leading-none text-muted">
-          ×
+        <div className="flex items-center gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-lg">{status === "ios-install" ? "📲" : "🔔"}</span>
+          <div>
+            <p className="font-semibold leading-tight">{status === "ios-install" ? "Add Due to your home screen" : "Never miss a deadline"}</p>
+            <p className="text-[13px] text-muted">{status === "ios-install" ? "Needed for reminders on iPhone" : "Reminders 24h and 2h before"}</p>
+          </div>
+        </div>
+        <button onClick={dismiss} aria-label="Dismiss" className="-mt-1 -mr-1 rounded-lg p-1 text-muted active:bg-surface-2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
       </div>
       {status === "ios-install" ? (
         <IOSSteps />
       ) : (
-        <button onClick={enable} disabled={busy} className={`${primary} mt-3 w-full`}>
-          {busy ? "Turning on…" : "Turn on notifications"}
-        </button>
+        <Button onClick={enable} loading={busy} loadingText="Turning on…" className="mt-3 w-full">
+          Turn on notifications
+        </Button>
       )}
       {error && <p className="mt-2 text-sm text-accent">{error}</p>}
-    </div>
+    </motion.div>
   );
 }

@@ -1,5 +1,7 @@
+import { Stagger } from "@/components/motion/stagger";
 import { Empty, FeedTabs, PageHeader } from "@/components/page-header";
 import { PostCard } from "@/components/post-card";
+import { PullToRefresh } from "@/components/pull-to-refresh";
 import { getMe, getSession } from "@/lib/me";
 import type { Post } from "@/lib/types";
 
@@ -22,18 +24,18 @@ export default async function Past() {
   const posts = data ?? [];
 
   return (
-    <>
-      <PageHeader title="Past" subtitle="Deadlines that have closed" />
+    <PullToRefresh>
+      <PageHeader title="Past" subtitle="Deadlines that have closed." />
       <FeedTabs active="past" />
       {posts.length === 0 ? (
-        <Empty icon="🗂" title="No past deadlines yet" />
+        <Empty icon="🗂" title="Nothing here yet" />
       ) : (
-        <div className="rise flex flex-col gap-2.5 opacity-75">
+        <Stagger className="flex flex-col gap-2.5 opacity-70 grayscale-[30%]">
           {posts.map((p) => (
             <PostCard key={p.id} post={p} editHref={isAdmin ? `/posts/${p.id}/edit` : undefined} />
           ))}
-        </div>
+        </Stagger>
       )}
-    </>
+    </PullToRefresh>
   );
 }

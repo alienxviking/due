@@ -52,7 +52,7 @@ export async function savePost(_: FormState, form: FormData): Promise<FormState>
   revalidatePath("/", "layout");
   const back = String(form.get("back") || "");
   const safeBack = back.startsWith("/") && !back.startsWith("//") ? back : "/";
-  redirect(id ? safeBack : isAdmin ? "/" : "/mine?sent=1");
+  redirect(id ? `${safeBack}${safeBack.includes("?") ? "&" : "?"}flash=saved` : isAdmin ? "/?flash=posted" : "/mine?flash=sent");
 }
 
 export async function approvePost(id: string) {

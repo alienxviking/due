@@ -1,4 +1,7 @@
+import { Suspense } from "react";
+import { Flash } from "@/components/flash";
 import { Nav } from "@/components/nav";
+import { Toaster } from "@/components/toaster";
 import { getMe, getSession } from "@/lib/me";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -11,8 +14,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <>
-      <main className="mx-auto max-w-md px-4 pt-4 pb-32">{children}</main>
+      <main className="mx-auto max-w-md px-4 pt-3 pb-36">{children}</main>
       <Nav isAdmin={isAdmin} pending={isAdmin ? (count ?? 0) : 0} />
+      <Toaster />
+      <Suspense>
+        <Flash />
+      </Suspense>
     </>
   );
 }

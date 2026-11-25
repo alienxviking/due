@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
+import { Count } from "@/components/count";
+import { Stagger } from "@/components/motion/stagger";
 import { Empty, PageHeader } from "@/components/page-header";
-import { AdminActions, Removable } from "@/components/post-actions";
+import { AdminActions, Removable, SwipeId } from "@/components/post-actions";
 import { PostCard } from "@/components/post-card";
+import { PullToRefresh } from "@/components/pull-to-refresh";
 import { getMe, getSession } from "@/lib/me";
 import type { Post } from "@/lib/types";
 
@@ -17,21 +20,36 @@ export default async function AdminQueue() {
   const posts = data ?? [];
 
   return (
-    <>
-      <PageHeader title="Queue" subtitle={posts.length ? `${posts.length} waiting for approval` : "Approved posts notify everyone"} />
+    <PullToRefresh>
+      <PageHeader
+        title="Queue"
+        subtitle={
+          posts.length ? (
+            <span className="inline-flex items-baseline gap-1">
+              <Count value={posts.length} className="font-semibold text-text tabular-nums" /> waiting · swipe right to approve, left to reject
+            </span>
+          ) : (
+            "Approved posts notify everyone."
+          )
+        }
+      />
       {posts.length === 0 ? (
-        <Empty title="All caught up">New submissions will show up here, and you&apos;ll get a notification.</Empty>
+        <Empty icon="☕" title="All caught up">
+          New submissions show up here, and you&apos;ll get a notification.
+        </Empty>
       ) : (
-        <div className="flex flex-col gap-2.5">
+        <Stagger className="flex flex-col gap-3">
           {posts.map((p) => (
-            <Removable key={p.id}>
-              <PostCard post={p}>
-                <AdminActions id={p.id} />
-              </PostCard>
-            </Removable>
+            <SwipeId key={p.id} id={p.id}>
+              <Removable swipe>
+                <PostCard post={p}>
+                  <AdminActions id={p.id} />
+                </PostCard>
+              </Removable>
+            </SwipeId>
           ))}
-        </div>
+        </Stagger>
       )}
-    </>
+    </PullToRefresh>
   );
 }
