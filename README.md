@@ -10,6 +10,10 @@ everyone gets a push notification, plus reminders 24h and 2h before it's due.
 - Supabase: Google sign-in, Postgres with row-level security, scheduled reminders
 - Web Push for notifications (works on Android, and on iPhone after "Add to Home Screen")
 
+## Setup
+
+See [SETUP.md](SETUP.md) for creating the Supabase project, Google sign-in and deploying.
+
 ## Running locally
 
 ```bash
@@ -21,4 +25,10 @@ Regenerate icons after editing `public/icons/icon.svg`:
 
 ```bash
 node scripts/icons.mjs
+```
+
+Database tests (in-memory Postgres, no Supabase needed):
+
+```bash
+npm run test:db
 ```
