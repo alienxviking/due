@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { SlidingNumber } from "@/components/animate-ui/primitives/texts/sliding-number";
+import { subjectVars, type Subject } from "@/lib/subject";
 
 function parts(ms: number) {
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -19,7 +20,7 @@ function Unit({ value, label }: { value: number; label: string }) {
 }
 
 /** The most urgent deadline, big, with a live ticking countdown. */
-export function NextUp({ title, url, deadline, when }: { title: string; url: string; deadline: string; when: string }) {
+export function NextUp({ title, url, deadline, when, subject }: { title: string; url: string; deadline: string; when: string; subject: Subject }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -38,9 +39,9 @@ export function NextUp({ title, url, deadline, when }: { title: string; url: str
       animate={{ opacity: 1, y: 0, scale: 1 }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 300, damping: 26 }}
-      className={`relative mb-6 block overflow-hidden rounded-[28px] p-5 text-white shadow-[0_20px_40px_-18px_var(--accent)] ${
-        urgent ? "bg-[linear-gradient(135deg,#ff7a45,#e8401c_55%,#c42d12)]" : "bg-[linear-gradient(135deg,#2b2f3a,#17181c)]"
-      }`}
+      // Urgent (under 24h) always goes orange; otherwise it wears the subject's colour.
+      style={subjectVars(urgent ? { ...subject, color: "#ee5420" } : subject)}
+      className="sub-hero relative mb-7 block overflow-hidden rounded-[30px] p-5 text-white shadow-[0_22px_44px_-20px_var(--sub)]"
     >
       {/* soft moving glow */}
       <motion.span
@@ -56,6 +57,7 @@ export function NextUp({ title, url, deadline, when }: { title: string; url: str
             <span className="relative inline-flex size-2 rounded-full bg-white" />
           </span>
           Next up
+          <span className="ml-auto rounded-full bg-white/20 px-2 py-0.5 text-[10px] tracking-wider normal-case">{subject.emoji} {subject.label}</span>
         </div>
         <h2 className="font-display mt-2 text-[22px] font-bold leading-tight">{title}</h2>
         <p className="mt-0.5 text-sm opacity-80">{when}</p>

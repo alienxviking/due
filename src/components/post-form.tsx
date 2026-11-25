@@ -7,6 +7,7 @@ import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-heig
 import { Switch } from "@/components/animate-ui/components/radix/switch";
 import { Segmented } from "@/components/motion/segmented";
 import { Button } from "@/components/ui/button";
+import { DEFAULT_SUBJECT, subjectOf, subjectVars } from "@/lib/subject";
 
 type Defaults = {
   id?: string;
@@ -47,6 +48,8 @@ export function PostForm({
   const [tba, setTba] = useState(defaults.tba ?? false);
   const [date, setDate] = useState(defaults.date ?? "");
   const [time, setTime] = useState(defaults.time ?? "23:59");
+  const [title, setTitle] = useState(defaults.title ?? "");
+  const subject = subjectOf(title);
 
   const dateChip = quickDates.find(([, v]) => v === date)?.[1] ?? null;
   const timeChip = TIMES.find(([, v]) => v === time)?.[1] ?? null;
@@ -59,7 +62,29 @@ export function PostForm({
 
       <label className="flex flex-col gap-2">
         <span className={label}>What&apos;s due?</span>
-        <input name="title" required maxLength={120} defaultValue={defaults.title} placeholder="DSA Assignment 4" className={`${input} font-display text-lg font-semibold`} />
+        <div className="relative" style={subjectVars(subject)}>
+          <span className="sub-tile pointer-events-none absolute top-1/2 left-2.5 flex size-10 -translate-y-1/2 items-center justify-center rounded-xl text-xl transition-colors">
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span key={subject.key} initial={{ scale: 0.3, rotate: -30, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }} exit={{ scale: 0.3, opacity: 0 }} transition={{ type: "spring", stiffness: 500, damping: 22 }}>
+                {subject.emoji}
+              </motion.span>
+            </AnimatePresence>
+          </span>
+          <input name="title" required maxLength={120} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="DSA Assignment 4" className={`${input} font-display pl-15 text-lg font-semibold`} />
+        </div>
+        <AnimatePresence initial={false}>
+          {subject !== DEFAULT_SUBJECT && (
+            <motion.span
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              style={subjectVars(subject)}
+              className="sub-text px-1 text-xs font-semibold"
+            >
+              Tagged as {subject.label}. It gets this colour in the feed.
+            </motion.span>
+          )}
+        </AnimatePresence>
       </label>
 
       <label className="flex flex-col gap-2">

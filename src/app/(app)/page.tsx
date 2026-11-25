@@ -1,13 +1,11 @@
-import Link from "next/link";
-import { Count } from "@/components/count";
-import { Stagger } from "@/components/motion/stagger";
-import { NextUp } from "@/components/next-up";
+import { FeedView } from "@/components/feed-view";
 import { NotificationBanner } from "@/components/notifications";
-import { Empty, FeedTabs, PageHeader, SectionLabel } from "@/components/page-header";
-import { PostCard } from "@/components/post-card";
+import { FeedTabs, PageHeader } from "@/components/page-header";
 import { PullToRefresh } from "@/components/pull-to-refresh";
+import type { Day } from "@/components/week-strip";
 import { getMe, getSession } from "@/lib/me";
-import { formatDeadline, GROUPS, groupOf, type Group } from "@/lib/time";
+import { subjectOf } from "@/lib/subject";
+import { addDaysIST, tileParts, toISTParts } from "@/lib/time";
 import type { Post } from "@/lib/types";
 
 function greeting(now: number) {
@@ -31,17 +29,21 @@ export default async function Home() {
       .returns<Post[]>(),
   ]);
   const posts = data ?? [];
-  const next = posts.find((p) => p.deadline);
-  const rest = posts.filter((p) => p !== next);
 
-  const groups = new Map<Group, Post[]>();
-  for (const p of rest) {
-    const g = groupOf(p.deadline, now);
-    groups.set(g, [...(groups.get(g) ?? []), p]);
+  // Next 14 days (IST) with the subject colours of whatever is due each day.
+  const byDay = new Map<string, string[]>();
+  for (const p of posts) {
+    if (!p.deadline) continue;
+    const d = toISTParts(p.deadline).date;
+    byDay.set(d, [...(byDay.get(d) ?? []), subjectOf(p.title, p.note).color]);
   }
-  const thisWeek = posts.filter((p) => p.deadline && ["Today", "Tomorrow", "This week"].includes(groupOf(p.deadline, now))).length;
+  const days: Day[] = Array.from({ length: 14 }, (_, i) => {
+    const date = addDaysIST(i);
+    const t = tileParts(`${date}T12:00:00+05:30`);
+    return { date, weekday: t.weekday, day: t.day, month: t.month, colors: byDay.get(date) ?? [], isToday: i === 0 };
+  });
+
   const first = profile.name?.split(" ")[0] ?? "there";
-  const editHref = (p: Post) => (isAdmin ? `/posts/${p.id}/edit` : undefined);
 
   return (
     <PullToRefresh>
@@ -50,45 +52,13 @@ export default async function Home() {
           <>
             {greeting(now)},
             <br />
-            <span className="text-accent">{first}</span>
+            <span className="bg-[linear-gradient(90deg,#ff6b3d,#7c5cff)] bg-clip-text text-transparent">{first}</span>
           </>
-        }
-        subtitle={
-          thisWeek === 0 ? (
-            "Nothing due this week."
-          ) : (
-            <span className="inline-flex items-baseline gap-1">
-              <Count value={thisWeek} className="font-semibold text-text tabular-nums" />
-              {thisWeek === 1 ? "deadline" : "deadlines"} this week
-            </span>
-          )
         }
       />
       <NotificationBanner />
       <FeedTabs active="upcoming" />
-
-      {posts.length === 0 ? (
-        <Empty icon="🎉" title="All clear">
-          Nothing due right now.{" "}
-          <Link href="/new" className="font-semibold text-accent">
-            Post a deadline
-          </Link>
-        </Empty>
-      ) : (
-        <>
-          {next && <NextUp title={next.title} url={next.url} deadline={next.deadline!} when={formatDeadline(next.deadline)} />}
-          {GROUPS.filter((g) => groups.has(g)).map((g, gi) => (
-            <section key={g} className="mb-7">
-              <SectionLabel count={groups.get(g)!.length}>{g}</SectionLabel>
-              <Stagger className="flex flex-col gap-2.5" delay={0.08 + gi * 0.05}>
-                {groups.get(g)!.map((p) => (
-                  <PostCard key={p.id} post={p} editHref={editHref(p)} />
-                ))}
-              </Stagger>
-            </section>
-          ))}
-        </>
-      )}
+      <FeedView posts={posts} days={days} isAdmin={isAdmin} now={now} />
     </PullToRefresh>
   );
 }
