@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 /** Big chrome-gradient title with an optional typed-in subtitle (Aceternity Text Generate). */
 export function PageHead({ title, subtitle, generate, right, className }: { title: string; subtitle?: string; generate?: boolean; right?: React.ReactNode; className?: string }) {
   return (
-    <header className={cn("flex items-end justify-between gap-4 pt-[max(28px,calc(env(safe-area-inset-top)+16px))] pb-6 md:pt-14 md:pb-8", className)}>
+    <header className={cn("flex items-end justify-between gap-4 pt-[max(64px,calc(env(safe-area-inset-top)+56px))] pb-6 md:pt-14 md:pb-8", className)}>
       <div className="min-w-0">
         <Link href="/" className="mb-3 inline-flex items-center gap-2 text-[13px] font-medium tracking-wide text-neutral-500">
           <span className="size-1.5 rounded-full bg-tint shadow-[0_0_10px_2px_var(--tint)]" />

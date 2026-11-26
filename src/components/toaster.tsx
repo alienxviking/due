@@ -9,7 +9,7 @@ export function Toaster() {
       theme="dark"
       position="top-center"
       offset={16}
-      mobileOffset={{ top: "max(12px, env(safe-area-inset-top))" }}
+      mobileOffset={{ top: "max(58px, calc(env(safe-area-inset-top) + 54px))" }}
       toastOptions={{
         classNames: {
           toast: "!rounded-2xl !border !border-white/10 !bg-neutral-950/85 !text-neutral-100 !shadow-[0_20px_50px_-20px_rgb(0_0_0/0.9)] !backdrop-blur-xl !font-sans",

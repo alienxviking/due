@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Count } from "@/components/count";
 import { DeadlineCard } from "@/components/deadline-card";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
+import { useIslandNext } from "@/components/island";
 import { NextUp } from "@/components/next-up";
 import { subjectOf } from "@/lib/subject";
 import { tap } from "@/lib/haptics";
@@ -58,6 +59,12 @@ export function HomeView({ posts, isAdmin, now }: { posts: Post[]; isAdmin: bool
   }, [posts, now]);
 
   const next = posts.find((p) => p.deadline);
+  const nextSubject = next ? subjectOf(next.title, next.note) : null;
+  useIslandNext(
+    next && nextSubject
+      ? { title: next.title, url: next.url, deadline: next.deadline!, when: formatDeadline(next.deadline), label: nextSubject.label, color: nextSubject.color }
+      : null,
+  );
   const visible: Group[] = filter === "today" ? ["Today"] : filter === "week" ? ["Today", "Tomorrow", "This week"] : filter === "tba" ? ["Date TBA"] : [...GROUPS];
   const shown = visible.filter((g) => groups.has(g));
   const editHref = (p: Post) => (isAdmin ? `/posts/${p.id}/edit` : undefined);

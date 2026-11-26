@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SlidingNumber } from "@/components/animate-ui/primitives/texts/sliding-number";
+import { NumberTicker } from "@/components/motion/number-ticker";
 import { Beam } from "@/components/glass/beam";
 import { GlassCard } from "@/components/glass/glass-card";
 import { Meteors } from "@/components/ui/meteors";
@@ -15,7 +15,7 @@ function parts(ms: number) {
 function Unit({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex flex-col">
-      <SlidingNumber number={value} padStart className="text-4xl leading-none font-bold text-neutral-50 tabular-nums md:text-6xl" />
+      <NumberTicker value={value} pad={2} duration={0.6} className="text-4xl leading-none font-bold text-neutral-50 md:text-6xl" />
       <span className="mt-2 text-[11px] font-medium tracking-[0.2em] text-neutral-500 uppercase">{label}</span>
     </div>
   );

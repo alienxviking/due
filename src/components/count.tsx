@@ -1,8 +1,8 @@
 "use client";
 
-import { SlidingNumber } from "@/components/animate-ui/primitives/texts/sliding-number";
+import { NumberTicker } from "@/components/motion/number-ticker";
 
-/** A number that rolls up from 0 on first view (Animate UI SlidingNumber). */
+/** A number whose digits roll into place on first view (Spectrum UI Number Ticker). */
 export function Count({ value, className }: { value: number; className?: string }) {
-  return <SlidingNumber number={value} fromNumber={0} className={className} />;
+  return <NumberTicker value={value} className={className} />;
 }

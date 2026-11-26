@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { Flash } from "@/components/flash";
+import { IslandProvider } from "@/components/island";
 import { Backdrop } from "@/components/glass/backdrop";
 import { Nav } from "@/components/nav";
 import { Toaster } from "@/components/toaster";
@@ -14,7 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   ]);
 
   return (
-    <>
+    <IslandProvider>
       <Backdrop />
       <main className="mx-auto max-w-6xl px-4 pb-[calc(96px+env(safe-area-inset-bottom))] md:px-8 md:pb-36">{children}</main>
       <Nav isAdmin={isAdmin} pending={isAdmin ? (count ?? 0) : 0} />
@@ -22,6 +23,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <Suspense>
         <Flash />
       </Suspense>
-    </>
+    </IslandProvider>
   );
 }
